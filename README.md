@@ -16,7 +16,7 @@ to activate, run `venv\Scripts\activate`
 
 # Dependancies 
 ## Python3 
-	- Required Libraries 
+- Required Libraries
 	`pip install ringcentral`,
 	`pip install dotenv`
 # Execute
