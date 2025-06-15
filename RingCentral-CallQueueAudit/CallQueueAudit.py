@@ -13,10 +13,11 @@ import os
 import sys
 import json
 import time
+import csv
 from dotenv import load_dotenv
 from ringcentral import SDK
 load_dotenv()
-
+datalist = []
 # RingCentral SDK
 rcsdk = SDK( os.environ.get('RC_APP_CLIENT_ID'),
         os.environ.get('RC_APP_CLIENT_SECRET'),
@@ -26,7 +27,7 @@ platform.login( jwt=os.environ.get('RC_USER_JWT') )
 
 # Perform requests while staying below API limit. Exit script if retry_limit hits 5. 
 
-def connectRequest(url, retry_limit=1):
+def connectRequest(url, retry_limit=5):
   for connectAttempt in range(retry_limit):
     resp = platform.get(url)
 
@@ -51,36 +52,71 @@ def connectRequest(url, retry_limit=1):
 
 # Request the call queues and prints the call queue name, pass call queue ID to get_RC_CQM
 # API Reference -> https://developers.ringcentral.com/guide/voice/call-routing/manual/call-queues ## Read Call Queue List
+
+# Start main thread #
+def main():
+  start_time = time.time()
+  cq_count = 0
+  cqm_count = 0
+
+  #perform credential check by checking if a 200 is returned from API
+  connect_test = connectRequest('/restapi/v2/accounts/~')
+  if  connect_test.response().status_code == 200:
+    print("Credentials good, proceeding with audit...")
+    get_RC_CQ()
+  else:
+    sys.exit("API did not respond with 200 OK, please check your .env variables and credentails.")
+
 def get_RC_CQ():
   try:
     resp = connectRequest('/restapi/v1.0/account/~/call-queues')
     for record in resp.json().records:
-      print(f'### Call Queue ###\n{record.name}\nMembers are:')
-      get_RC_CQM(record.id)
-      print (f'\n')
+      cq_name = (record.name)
+      get_RC_CQM(record.id,cq_name)
   except Exception as e:
-    print (e)
+    sys.exit("error occured: " + str(e))
 
 # Iterate through call queues and get member IDs, pass to get_RC_Users
 # API Reference -> https://developers.ringcentral.com/guide/voice/call-routing/manual/call-queues ## Read Call Queue Members
-def get_RC_CQM(id):
-    try:
-      #resp = platform.get ('/restapi/v1.0/account/325629124/call-queues/'+str(id)+'/members')
-      resp = connectRequest('/restapi/v1.0/account/~/call-queues/'+str(id)+'/members')
-      for record in resp.json().records:
-        get_RC_Users(record.id, record.extensionNumber)
-    except Exception as e:
-            print (e)
+def get_RC_CQM(id,cq_name):
+  try:
+    resp = connectRequest('/restapi/v1.0/account/~/call-queues/'+str(id)+'/members')
+    for record in resp.json().records:
+      cq_member_ext = (record.extensionNumber)
+      get_RC_Users(record.id, record.extensionNumber, cq_name, cq_member_ext)
+
+  except Exception as e:
+    sys.exit("error occured: " + str(e))
 
 # Print call queue members names to console
 # API Reference -> https://developers.ringcentral.com/api-reference/Extensions/listExtensions
-def get_RC_Users(id, extensionNumber):
+def get_RC_Users(id, extensionNumber,cq_name,cq_member_ext):
   try:
     resp = connectRequest('/restapi/v1.0/account/~/extension/'+str(id))
-    print (f'{resp.json().name} - {extensionNumber}')
-
+    cq_member = (resp.json().name)
+    build_datalist(cq_name,cq_member,cq_member_ext)
   except Exception as e:
-    print (e)
+    sys.exit(e)
+
+def build_datalist(cq_name, cq_member, cq_member_ext):
+  datalist.append({
+    "Call Queue Name": cq_name,
+    "Call Queue Member": cq_member,
+    "Member Extension": cq_member_ext
+  })
+  build_csv(datalist)
+
+def build_csv(datalist):
+    datalist_jsondump = json.dumps(datalist)
+    datalist_json = json.loads(datalist_jsondump)
+
+    titles=('Call Queue Names', 'Call Queue Members', 'Member Extension')
+    with open("callQueues.csv", "w", newline='', encoding="utf-8") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=datalist_json[0].keys())
+        writer.writeheader()
+        for row in datalist_json:
+            print (row['Call Queue Name'], row['Call Queue Member'], row['Member Extension'])
+            writer.writerow(row)
 
 # Start Execution
-get_RC_CQ()
+main()
