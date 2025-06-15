@@ -26,7 +26,6 @@ platform = rcsdk.platform()
 platform.login( jwt=os.environ.get('RC_USER_JWT') )
 
 # Perform requests while staying below API limit. Exit script if retry_limit hits 5. 
-
 def connectRequest(url, retry_limit=5):
   for connectAttempt in range(retry_limit):
     resp = platform.get(url)
@@ -50,9 +49,6 @@ def connectRequest(url, retry_limit=5):
 
   raise Exception(f"[!] Failed after {retry_limit} attempts: {url}")
 
-# Request the call queues and prints the call queue name, pass call queue ID to get_RC_CQM
-# API Reference -> https://developers.ringcentral.com/guide/voice/call-routing/manual/call-queues ## Read Call Queue List
-
 # Start main thread #
 def main():
   start_time = time.time()
@@ -61,12 +57,14 @@ def main():
 
   #perform credential check by checking if a 200 is returned from API
   connect_test = connectRequest('/restapi/v2/accounts/~')
-  if  connect_test.response().status_code == 200:
+  if connect_test.response().status_code == 200:
     print("Credentials good, proceeding with audit...")
     get_RC_CQ()
   else:
     sys.exit("API did not respond with 200 OK, please check your .env variables and credentails.")
 
+# Request the call queues and prints the call queue name, pass call queue ID to get_RC_CQM
+# API Reference -> https://developers.ringcentral.com/guide/voice/call-routing/manual/call-queues ## Read Call Queue List
 def get_RC_CQ():
   try:
     resp = connectRequest('/restapi/v1.0/account/~/call-queues')
