@@ -71,7 +71,14 @@ def main():
   else:
     sys.exit("API did not respond with 200 OK, please check your .env variables and credentails.")
 
-# Request the call queues and prints the call queue name, pass call queue ID to get_ringcentral_callqueue_members
+  end_time = datetime.datetime.now()
+  runtime = (end_time - start_time).total_seconds()
+  m, s  = divmod(runtime, 60)
+
+  print("Script has completed, audit results:")
+  print(f'\nScript End Time:    {end_time}')
+  print("Script runtime was: {} minutes and {} seconds".format(int(m), int(s)))
+  exit (0)
 # API Reference -> https://developers.ringcentral.com/guide/voice/call-routing/manual/call-queues ## Read Call Queue List
 def get_ringcentral_callqueue():
   try:
