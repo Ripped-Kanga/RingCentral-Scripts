@@ -80,12 +80,62 @@ def main():
   print("Script runtime was: {} minutes and {} seconds".format(int(m), int(s)))
   exit (0)
 # API Reference -> https://developers.ringcentral.com/guide/voice/call-routing/manual/call-queues ## Read Call Queue List
-def get_ringcentral_callqueue():
+def check_ringcentral_callqueue_count ():
+  call_queue_count_list = []
+
   try:
     resp = connectRequest('/restapi/v1.0/account/~/call-queues')
-    for record in resp.json().records:
-      cq_name = (record.name)
-      get_ringcentral_callqueue_members(record.id,cq_name)
+    call_queue_count_list = len(resp.json().records)
+    print (f'Found {call_queue_count_list} Call Queues\nIf you want to restrict the scope of the audit to only a certain amount of call queues, enter the amount now, otherwise press enter.')
+    audit_limit = input()
+
+    if audit_limit:
+      print(f'Proceeding with audit within the defined constrainst of {audit_limit} call queues.\n')
+      get_ringcentral_callqueue(int(audit_limit))
+    else:
+      print("Audit limit not set, proceeding with full call queue audit.")
+      get_ringcentral_callqueue(audit_limit)
+
+  except Exception as e:
+    sys.exit("error occured:" + str(e))
+
+# Request the call queues and pass call queue id, name to get_ringcentral_callqueue_members(), if call queue audit constrainst have been set, only audit that many call queues
+# API Reference -> https://developers.ringcentral.com/guide/voice/call-routing/manual/call-queues ## Read Call Queue List
+def get_ringcentral_callqueue(audit_limit):
+  call_queue_count_list = []
+
+  try:
+    resp = connectRequest('/restapi/v1.0/account/~/call-queues')
+    if audit_limit:
+      print ("Constrained Audit")
+      audit_count = 0
+      #while audit_count < audit_limit:
+      for record in resp.json().records:
+        if audit_count == audit_limit:
+          print (audit_count)
+          break
+
+        else:
+          call_queue_count_list.append(record.id)
+          call_queue_count = len(call_queue_count_list)
+          print (f'\n \u25BA\u25BA\u25BA Call Queues Found: {call_queue_count}\n')
+          print (f'{record.name} - {record.extensionNumber}')
+          cq_name = (record.name)
+          cq_extension = (record.extensionNumber)
+          audit_count += 1
+          get_ringcentral_callqueue_members(record.id,cq_name,cq_extension)
+
+    else:
+      print ("Full Audit")
+      for record in resp.json().records:
+        call_queue_count_list.append(record.id)
+        call_queue_count = len(call_queue_count_list)
+        print (f'\n \u25BA\u25BA\u25BA Call Queues Found: {call_queue_count}\n')
+        print (f'{record.name} - {record.extensionNumber}')
+        cq_name = (record.name)
+        cq_extension = (record.extensionNumber)
+        get_ringcentral_callqueue_members(record.id,cq_name,cq_extension)
+
   except Exception as e:
     sys.exit("error occured: " + str(e))
 
