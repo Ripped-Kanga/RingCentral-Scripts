@@ -11,6 +11,7 @@ import os
 import sys
 import json
 import time
+import datetime
 import csv
 from dotenv import load_dotenv
 from ringcentral import SDK
@@ -20,6 +21,8 @@ load_dotenv()
 datalist = []
 retry_limit = 6
 retry_attempts = 0
+start_time = datetime.datetime.now()
+
 # RingCentral SDK
 rcsdk = SDK( os.environ.get('RC_APP_CLIENT_ID'),
         os.environ.get('RC_APP_CLIENT_SECRET'),
@@ -37,10 +40,9 @@ def connectRequest(url):
     headers = resp.response().headers
     api_limit = int(headers["X-Rate-Limit-Limit"])
     api_limit_remaining = int(headers["X-Rate-Limit-Remaining"])
-    #print ("Remaining requests - ",remaining)
     api_limit_window = int(headers["X-Rate-Limit-Window"])
 
-    if http_status == 429:
+    if not http_status == 200:
       print (f'Rate limiting has been applied, waiting for {api_limit_window} seconds, number of retries left is {retry_limit - retry_attempts}')
       retry_attempts =+ 1
       time.sleep(api_limit_window)
@@ -52,22 +54,20 @@ def connectRequest(url):
       time.sleep(retry_after)
       continue
     
-    else: #resp.ok:
+    else:
       return resp
 
   raise Exception(f"Rate limiting has been hit {retry_limit} times, exiting.")
 
-# Start main thread #
+# Start main thread, checks API connectivity and proceeds if 200 OK is returned.  #
 def main():
-  start_time = time.time()
-  cq_count = 0
-  cqm_count = 0
-
-  #perform credential check by checking if a 200 is returned from API
+  print (f'Script Start Time: {start_time}')
   connect_test = connectRequest('/restapi/v2/accounts/~')
+
   if connect_test.response().status_code == 200:
-    print("Credentials good, proceeding with audit...")
-    get_ringcentral_callqueue()
+    print("Connection returned 200 OK, proceeding with audit...")
+    #get_ringcentral_callqueue()
+    check_ringcentral_callqueue_count()
   else:
     sys.exit("API did not respond with 200 OK, please check your .env variables and credentails.")
 
@@ -79,6 +79,8 @@ def main():
   print(f'\nScript End Time:    {end_time}')
   print("Script runtime was: {} minutes and {} seconds".format(int(m), int(s)))
   exit (0)
+
+# Check how many call queues exist, prompts user for constrained audit count.
 # API Reference -> https://developers.ringcentral.com/guide/voice/call-routing/manual/call-queues ## Read Call Queue List
 def check_ringcentral_callqueue_count ():
   call_queue_count_list = []
@@ -139,47 +141,55 @@ def get_ringcentral_callqueue(audit_limit):
   except Exception as e:
     sys.exit("error occured: " + str(e))
 
-# Iterate through call queues and get member IDs, pass to get_ringcentral_users
+
+# Iterate through call queues and get member IDs, pass to get_ringcentral_users()
 # API Reference -> https://developers.ringcentral.com/guide/voice/call-routing/manual/call-queues ## Read Call Queue Members
-def get_ringcentral_callqueue_members(id,cq_name):
+def get_ringcentral_callqueue_members(id,cq_name,cq_extension):
+
   try:
     resp = connectRequest('/restapi/v1.0/account/~/call-queues/'+str(id)+'/members')
+
     for record in resp.json().records:
       cq_member_ext = (record.extensionNumber)
-      get_ringcentral_users(record.id, record.extensionNumber, cq_name, cq_member_ext)
+      get_ringcentral_users(record.id,cq_name,cq_member_ext,cq_extension)
 
   except Exception as e:
     sys.exit("error occured: " + str(e))
 
-# Print call queue members names to console
+# Request extension details and pass Call Queue Name, Extension Name, and Extension Number to build_datalist()
 # API Reference -> https://developers.ringcentral.com/api-reference/Extensions/listExtensions
-def get_ringcentral_users(id, extensionNumber,cq_name,cq_member_ext):
+def get_ringcentral_users(id,cq_name,cq_member_ext,cq_extension):
+
   try:
     resp = connectRequest('/restapi/v1.0/account/~/extension/'+str(id))
     cq_member = (resp.json().name)
-    build_datalist(cq_name,cq_member,cq_member_ext)
+    print(f'\u2192{resp.json().name} - {cq_member_ext}')
+    build_datalist(cq_name,cq_extension,cq_member,cq_member_ext)
+
   except Exception as e:
     sys.exit(e)
 
-def build_datalist(cq_name, cq_member, cq_member_ext):
+# Uses the collected call queue information to build a dictionary.
+def build_datalist(cq_name,cq_extension,cq_member,cq_member_ext):
+
   datalist.append({
-    "Call Queue Name": cq_name,
-    "Call Queue Member": cq_member,
-    "Member Extension": cq_member_ext
+    "Call Queue Name":      cq_name,
+    "Call Queue Extension": cq_extension,
+    "Call Queue Member":    cq_member,
+    "Member Extension":     cq_member_ext
   })
   build_csv(datalist)
 
+# Builds the csv file, sets headers. 
 def build_csv(datalist):
     datalist_jsondump = json.dumps(datalist)
     datalist_json = json.loads(datalist_jsondump)
-
-    titles=('Call Queue Names', 'Call Queue Members', 'Member Extension')
     with open("callQueues.csv", "w", newline='', encoding="utf-8") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=datalist_json[0].keys())
         writer.writeheader()
         for row in datalist_json:
-            print (row['Call Queue Name'], row['Call Queue Member'], row['Member Extension'])
-            writer.writerow(row)
+          #print (row['Call Queue Name'], row['Call Queue Extension'], row['Call Queue Member'], row['Member Extension'])
+          writer.writerow(row)
 
 # Start Execution
 main()
