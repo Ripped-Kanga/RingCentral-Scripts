@@ -1,5 +1,4 @@
 #!/usr/bin/python
-
 """
 Author:   Alan Saunders
 Purpose:  Uses the RingCentral API to collect information on the RingCentral instance, useful for conducting audits and health checks on RingCentral instances.
@@ -13,51 +12,13 @@ import json
 import time
 import datetime
 import csv
-from dotenv import load_dotenv
-from ringcentral import SDK
-load_dotenv()
+from RingCentralMain import connectRequest, callqueue_audit_limit
 
 # Global Variables
 datalist = []
-retry_limit = 6
-retry_attempts = 0
 start_time = datetime.datetime.now()
 
-# RingCentral SDK
-rcsdk = SDK( os.environ.get('RC_APP_CLIENT_ID'),
-        os.environ.get('RC_APP_CLIENT_SECRET'),
-        os.environ.get('RC_SERVER_URL') )
-platform = rcsdk.platform()
-platform.login( jwt=os.environ.get('RC_USER_JWT') )
 
-# Perform requests while staying below API limit. Exit script if retry_limit hits 5. 
-def connectRequest(url):
-  for connectAttempt in range(retry_limit):
-    resp = platform.get(url)
-
-    # Set Header variables
-    http_status = resp.response().status_code
-    headers = resp.response().headers
-    api_limit = int(headers["X-Rate-Limit-Limit"])
-    api_limit_remaining = int(headers["X-Rate-Limit-Remaining"])
-    api_limit_window = int(headers["X-Rate-Limit-Window"])
-
-    if not http_status == 200:
-      print (f'Rate limiting has been applied, waiting for {api_limit_window} seconds, number of retries left is {retry_limit - retry_attempts}')
-      retry_attempts =+ 1
-      time.sleep(api_limit_window)
-      continue
-
-    elif api_limit_remaining == 0:
-      retry_after = api_limit_window
-      print(f'Rate limit has been hit, waiting for {retry_after} seconds')
-      time.sleep(retry_after)
-      continue
-    
-    else:
-      return resp
-
-  raise Exception(f"Rate limiting has been hit {retry_limit} times, exiting.")
 
 # Start main thread, checks API connectivity and proceeds if 200 OK is returned.  #
 def main():
@@ -66,8 +27,8 @@ def main():
 
   if connect_test.response().status_code == 200:
     print("Connection returned 200 OK, proceeding with audit...")
-    #get_ringcentral_callqueue()
-    check_ringcentral_callqueue_count()
+    audit_limit, call_queue_count = callqueue_audit_limit()
+    get_ringcentral_callqueue(audit_limit)
   else:
     sys.exit("API did not respond with 200 OK, please check your .env variables and credentails.")
 
@@ -76,32 +37,15 @@ def main():
   m, s  = divmod(runtime, 60)
 
   print("Script has completed, audit results:")
+  if audit_limit:
+    print(f'{call_queue_count} call queues found, but only {audit_limit} audited.')
+  else:
+    print(f'{call_queue_count} call queues found and audited.')
   print(f'\nScript End Time:    {end_time}')
   print("Script runtime was: {} minutes and {} seconds".format(int(m), int(s)))
   exit (0)
 
-# Check how many call queues exist, prompts user for constrained audit count.
-# API Reference -> https://developers.ringcentral.com/guide/voice/call-routing/manual/call-queues ## Read Call Queue List
-def check_ringcentral_callqueue_count ():
-  call_queue_count_list = []
-
-  try:
-    resp = connectRequest('/restapi/v1.0/account/~/call-queues')
-    call_queue_count_list = len(resp.json().records)
-    print (f'Found {call_queue_count_list} Call Queues\nIf you want to restrict the scope of the audit to only a certain amount of call queues, enter the amount now, otherwise press enter.')
-    audit_limit = input()
-
-    if audit_limit:
-      print(f'Proceeding with audit within the defined constrainst of {audit_limit} call queues.\n')
-      get_ringcentral_callqueue(int(audit_limit))
-    else:
-      print("Audit limit not set, proceeding with full call queue audit.")
-      get_ringcentral_callqueue(audit_limit)
-
-  except Exception as e:
-    sys.exit("error occured:" + str(e))
-
-# Request the call queues and pass call queue id, name to get_ringcentral_callqueue_members(), if call queue audit constrainst have been set, only audit that many call queues
+# Request the call queues and parse call queue id, name to get_ringcentral_callqueue_members(), if call queue audit constrainst have been set, only audit that many call queues
 # API Reference -> https://developers.ringcentral.com/guide/voice/call-routing/manual/call-queues ## Read Call Queue List
 def get_ringcentral_callqueue(audit_limit):
   call_queue_count_list = []
@@ -111,7 +55,6 @@ def get_ringcentral_callqueue(audit_limit):
     if audit_limit:
       print ("Constrained Audit")
       audit_count = 0
-      #while audit_count < audit_limit:
       for record in resp.json().records:
         if audit_count == audit_limit:
           break
@@ -120,7 +63,7 @@ def get_ringcentral_callqueue(audit_limit):
           call_queue_count_list.append(record.id)
           call_queue_count = len(call_queue_count_list)
           print (f'\n \u25BA\u25BA\u25BA Call Queues Found: {call_queue_count}\n')
-          print (f'{record.name} - {record.extensionNumber}')
+          print (f'({record.name} - {record.extensionNumber})')
           cq_name = (record.name)
           cq_extension = (record.extensionNumber)
           audit_count += 1
@@ -141,7 +84,7 @@ def get_ringcentral_callqueue(audit_limit):
     sys.exit("error occured: " + str(e))
 
 
-# Iterate through call queues and get member IDs, pass to get_ringcentral_users()
+# Iterate through call queues and get member IDs, parse to get_ringcentral_users()
 # API Reference -> https://developers.ringcentral.com/guide/voice/call-routing/manual/call-queues ## Read Call Queue Members
 def get_ringcentral_callqueue_members(id,cq_name,cq_extension):
 
@@ -155,7 +98,7 @@ def get_ringcentral_callqueue_members(id,cq_name,cq_extension):
   except Exception as e:
     sys.exit("error occured: " + str(e))
 
-# Request extension details and pass Call Queue Name, Extension Name, and Extension Number to build_datalist()
+# Request extension details and parse Call Queue Name, Extension Name, and Extension Number to build_datalist()
 # API Reference -> https://developers.ringcentral.com/api-reference/Extensions/listExtensions
 def get_ringcentral_users(id,cq_name,cq_member_ext,cq_extension):
 
@@ -187,8 +130,10 @@ def build_csv(datalist):
         writer = csv.DictWriter(csvfile, fieldnames=datalist_json[0].keys())
         writer.writeheader()
         for row in datalist_json:
+          #enable below print for debugging
           #print (row['Call Queue Name'], row['Call Queue Extension'], row['Call Queue Member'], row['Member Extension'])
           writer.writerow(row)
 
 # Start Execution
-main()
+if __name__ == "__main__":
+    main()
