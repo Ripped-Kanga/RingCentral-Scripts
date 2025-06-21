@@ -5,6 +5,7 @@ A collection of scripts that interact with the RingCentral API
 You get the environment parameters from your
 application dashbord in your developer account
 https://developers.ringcentral.com
+Refer to the .env_template for an example.
 
 # Setup Python Venv
 ## Linux & Mac
@@ -20,8 +21,38 @@ to activate, run `venv\Scripts\activate`
 	`pip install ringcentral`,
 	`pip install dotenv`
 # Execute
+Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 ## Linux & Mac
 `python3 CallQueueAudit.py`
 
 ## Windows
 `python CallQueueAudit.py`
+
+# Implementation Tracking
+## CallQueueAudit.py
+- [x] Implement rate limit checking and prevention.
+- [x] Implement audit scope limit, display how many queues exist on the RingCentral instance and ask the user how many they want to audit. 
+- [ ] Audit based off call queue name, useful if you only need info on one call queue. Should accept Call Queue Name or Call Queue Extension
+- [ ] Optional: After running audit, ability to find all call queues one member is apart of, only print to console???
+
+## UserAudit.py
+- [ ] Build initial version, test and debug.
+- [ ] Should pull the following:
+	### User Information
+	- [ ] First & Last Name
+	- [ ] Extension Number
+	- [ ] Email
+	- [ ] Contact Number
+	- [ ] Company Name
+	- [ ] Departments
+	- [ ] Permissions (Roles)
+	- [ ] Status
+	- [ ] Setup Wizard State
+	- [ ] Site
+	- [ ] Service Features (Voicemail, SMS, DND, Presence, International Dial Out, Call Forwarding, ect...)
+	### User Device Information
+	- [ ] Device Name
+	- [ ] Device URI
+	- [ ] Device Caller ID
+
+
