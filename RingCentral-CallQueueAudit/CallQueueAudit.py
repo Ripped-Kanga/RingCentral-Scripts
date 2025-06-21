@@ -83,7 +83,6 @@ def get_ringcentral_callqueue(audit_limit):
   except Exception as e:
     sys.exit("error occured: " + str(e))
 
-
 # Iterate through call queues and get member IDs, parse to get_ringcentral_users()
 # API Reference -> https://developers.ringcentral.com/guide/voice/call-routing/manual/call-queues ## Read Call Queue Members
 def get_ringcentral_callqueue_members(id,cq_name,cq_extension):

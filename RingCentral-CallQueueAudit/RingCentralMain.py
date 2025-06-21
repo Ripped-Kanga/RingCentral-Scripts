@@ -2,7 +2,7 @@
 
 """
 Author:   Alan Saunders
-Purpose:  Uses the RingCentral API to collect information on the RingCentral instance, useful for conducting audits and health checks on RingCentral instances.
+Purpose:  Uses the RingCentral API to collect information on the RingCentral instance, parses it back to the calling function.
 Version:  0.2
 Github:   https://github.com/Ripped-Kanga/RingCentral-Scripts
 """
@@ -22,9 +22,9 @@ retry_limit = 6
 retry_attempts = 0
 
 # RingCentral SDK
-rcsdk = SDK( os.environ.get('RC_APP_CLIENT_ID'),
-        os.environ.get('RC_APP_CLIENT_SECRET'),
-        os.environ.get('RC_SERVER_URL') )
+rcsdk = SDK(  os.environ.get('RC_APP_CLIENT_ID'),
+              os.environ.get('RC_APP_CLIENT_SECRET'),
+              os.environ.get('RC_SERVER_URL') )
 platform = rcsdk.platform()
 platform.login( jwt=os.environ.get('RC_USER_JWT') )
 
@@ -41,7 +41,7 @@ def connectRequest(url):
     api_limit_window = int(headers["X-Rate-Limit-Window"])
 
     if not http_status == 200:
-      print (f'Rate limiting has been applied, waiting for {api_limit_window} seconds, number of retries left is {retry_limit - retry_attempts}')
+      print (f'Rate limiting or another error has occured, waiting for {api_limit_window} seconds, number of retries left is {retry_limit - retry_attempts}')
       retry_attempts =+ 1
       time.sleep(api_limit_window)
       continue
