@@ -114,7 +114,6 @@ def get_ringcentral_callqueue(audit_limit):
       #while audit_count < audit_limit:
       for record in resp.json().records:
         if audit_count == audit_limit:
-          print (audit_count)
           break
 
         else:
