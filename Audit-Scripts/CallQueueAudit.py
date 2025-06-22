@@ -1,8 +1,8 @@
 #!/usr/bin/python
 """
 Author:   Alan Saunders
-Purpose:  Uses the RingCentral API to collect information on the RingCentral instance, useful for conducting audits and health checks on RingCentral instances.
-Version:  0.4
+Purpose:  Uses the RingCentral API to collect information on the RingCentral Call Queues.
+Version:  0.5
 Github:   https://github.com/Ripped-Kanga/RingCentral-Scripts
 """
 # Import libraries
@@ -12,22 +12,19 @@ import json
 import time
 import datetime
 import csv
-from RingCentralMain import connectRequest, callqueue_audit_limit
+from RingCentralMain import connection_test, connectRequest, audit_checker
 
 # Global Variables
 datalist = []
 start_time = datetime.datetime.now()
 
 
-
-# Start main thread, checks API connectivity and proceeds if 200 OK is returned.  #
-def main():
+# Start main thread
+def main_callqueue():
   print (f'Script Start Time: {start_time}')
-  connect_test = connectRequest('/restapi/v2/accounts/~')
-
-  if connect_test.response().status_code == 200:
-    print("Connection returned 200 OK, proceeding with audit...")
-    audit_limit, call_queue_count = callqueue_audit_limit()
+  connection_attempt = connection_test()
+  if connection_attempt:
+    audit_limit, call_queue_count = audit_checker('/restapi/v1.0/account/~/call-queues')
     get_ringcentral_callqueue(audit_limit)
   else:
     sys.exit("API did not respond with 200 OK, please check your .env variables and credentails.")
@@ -136,4 +133,4 @@ def build_csv(datalist):
 
 # Start Execution
 if __name__ == "__main__":
-    main()
+    main_callqueue()

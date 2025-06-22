@@ -3,7 +3,7 @@
 """
 Author:   Alan Saunders
 Purpose:  Uses the RingCentral API to collect information on the RingCentral instance, useful for conducting audits and health checks on RingCentral instances.
-Version:  0.2
+Version:  0.4
 Github:   https://github.com/Ripped-Kanga/RingCentral-Scripts
 """
 # Import libraries
@@ -15,6 +15,8 @@ import datetime
 import csv
 from dotenv import load_dotenv
 from ringcentral import SDK
+import inspect
+from pick import pick
 load_dotenv()
 
 # Global Variables
@@ -28,6 +30,7 @@ rcsdk = SDK( os.environ.get('RC_APP_CLIENT_ID'),
 platform = rcsdk.platform()
 platform.login( jwt=os.environ.get('RC_USER_JWT') )
 
+
 # Perform requests while staying below API limit. Exit script if retry_limit hits 5. 
 def connectRequest(url):
   for connectAttempt in range(retry_limit):
@@ -38,6 +41,8 @@ def connectRequest(url):
     headers = resp.response().headers
     api_limit = int(headers["X-Rate-Limit-Limit"])
     api_limit_remaining = int(headers["X-Rate-Limit-Remaining"])
+    #for debugging
+    #print (api_limit_remaining)
     api_limit_window = int(headers["X-Rate-Limit-Window"])
 
     if not http_status == 200:
@@ -57,21 +62,68 @@ def connectRequest(url):
 
   raise Exception(f"Rate limiting has been hit {retry_limit} times, exiting.")
 
-# Check how many call queues exist, prompts user for constrained audit count, and passes back to main()
-# API Reference -> https://developers.ringcentral.com/guide/voice/call-routing/manual/call-queues ## Read Call Queue List
-def callqueue_audit_limit ():
+
+# Performs a connection test to the RingCentral API and returns True if the response is HTTP 200. 
+def connection_test():
+  connect_test_url = connectRequest('/restapi/v2/accounts/~')
+
+  if connect_test_url.response().status_code == 200:
+    print("Connection returned 200 OK, proceeding with audit...")
+    return True
+  else:
+    sys.exit("API did not respond with 200 OK, please check your .env variables and credentails.")
+
+
+def audit_checker (audit_url):
   try:
-    resp = connectRequest('/restapi/v1.0/account/~/call-queues')
-    call_queue_count_list = len(resp.json().records)
-    print (f'Found {call_queue_count_list} Call Queues:\nIf you want to restrict the scope of the audit to only a certain amount of call queues, enter the amount now, otherwise press enter.')
+    resp = connectRequest(audit_url)
+    totalElements = resp.json().paging.totalElements
+    calling_function = inspect.stack()[1][3]
+
+    if calling_function == "main_user":
+      print (f'Found {totalElements} Users:\n')
+      ask_audit = str(input("Do you want to customise the conditions of the audit?(y/n: "))
+
+      if ask_audit.lower() == "y":
+        print("Customised audit selected.")
+        # load pick menu
+        title = 'Select a query option below: (You can only choose one!)'
+        query_options = ['extensionNumber', 'email', 'status']
+        option, index = pick(query_options, title, indicator='>>')
+
+        match option:
+          case 'extensionNumber':
+            query_extension = int(input("Enter the Extension Number: "))
+            query_option = str(f"{option}="+str(query_extension))
+          case 'email':
+            query_email = (input("Enter the Email Address: "))
+            query_option = (f'{option}='+query_email)
+          case 'status':
+            query_status = str(input("Enter the User Status (Enabled, Disabled, NotActivated, Unassigned: "))
+            query_option = str(f"{option}="+query_status.capitalize())
+          case _:
+            sys.exit("An error occured in the pick list.")
+
+
+        built_url = str(f'/restapi/v1.0/account/~/extension?perPage={totalElements}&{query_option}')
+        return (totalElements, built_url)
+
+      elif ask_audit.lower() == "n":
+        print("No customisation will apply to the user audit, proceeding.")
+        built_url = str(f'/restapi/v1.0/account/~/extension?perPage={totalElements}')
+        return (totalElements, built_url)
+
+    elif calling_function == "main_callqueue":
+      print (f'Found {totalElements} Call Queues:\nIf you want to restrict the scope of the audit to only a certain amount of call queues, enter the amount now, otherwise press enter.')
     audit_limit_input = input()
 
     if audit_limit_input:
       print(f'Proceeding with audit within the defined constrainst of {audit_limit_input} call queues.\n')
-      return (int(audit_limit_input),call_queue_count_list)
+      return (int(audit_limit_input),totalElements)
+
     else:
       print("Audit limit not set, proceeding with full call queue audit.")
-      return (audit_limit_input,call_queue_count_list)
+      return (audit_limit_input,totalElements)
 
   except Exception as e:
     sys.exit("error occured:" + str(e))

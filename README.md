@@ -18,8 +18,10 @@ to activate, run `venv\Scripts\activate`
 # Dependancies 
 ## Python3 
 - Required Libraries
-	`pip install ringcentral`,
-	`pip install dotenv`
+	- `pip install ringcentral` # RingCentral SDK
+	- `pip install dotenv` # .env support
+	- `pip install pick` # console menu
+
 # Execute
 Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 ## Linux & Mac
@@ -36,10 +38,11 @@ Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 - [ ] Optional: After running audit, ability to find all call queues one member is apart of, only print to console???
 
 ## UserAudit.py
-- [ ] Build initial version, test and debug.
+- [x] Build initial version, test and debug.
+	- [x] Currently, pulls only the users name, but core logic loop is established. 
 - [ ] Should pull the following:
 	### User Information
-	- [ ] First & Last Name
+	- [x] First & Last Name
 	- [ ] Extension Number
 	- [ ] Email
 	- [ ] Contact Number
