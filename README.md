@@ -42,7 +42,7 @@ Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 	- [x] Currently, pulls only the users name, but core logic loop is established. 
 - [ ] Should pull the following:
 	### User Information
-	- :ballot_box_with_check: First & Last Name
+	- [x] First & Last Name
 	- [ ] Extension Number
 	- [ ] Email
 	- [ ] Contact Number
