@@ -28,7 +28,7 @@ rcsdk = SDK( os.environ.get('RC_APP_CLIENT_ID'),
         os.environ.get('RC_APP_CLIENT_SECRET'),
         os.environ.get('RC_SERVER_URL') )
 platform = rcsdk.platform()
-platform.login( jwt=os.environ.get('RC_USER_JWT') )
+platform.login( jwt=os.environ.get('RC_JWT_TOKEN') )
 
 
 # Perform requests while staying below API limit. Exit script if retry_limit hits 5. 
