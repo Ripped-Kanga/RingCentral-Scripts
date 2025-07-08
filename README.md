@@ -1,26 +1,26 @@
 # RingCentral-Scripts
 A collection of scripts that interact with the RingCentral API
 
-# Populate .env
-You get the environment parameters from your
-application dashbord in your developer account
-https://developers.ringcentral.com
-Refer to the .env_template for an example.
-
-# Setup Python Venv
-## Linux & Mac
-`python3 -m venv /path/to/new/virtual/environment`.
-To activate, run `source /path/to/new/virtual/environment/bin/activate`
-## Windows
-`python -m venv /path/to/new/virtual/environment`
-to activate, run `venv\Scripts\activate`
-
 # Dependancies 
 ## Python3 
 - Required Libraries
 	- `pip install ringcentral` # RingCentral SDK
 	- `pip install dotenv` # .env support
 	- `pip install pick` # console menu
+
+# Populate .env
+You get the environment parameters from your
+application dashbord in your developer account
+https://developers.ringcentral.com
+Refer to the .env_template for an example.
+
+# Setup Python Virtual Environment
+## Linux & Mac
+`python3 -m venv /path/to/new/virtual/environment`.
+To activate, run `source /path/to/new/virtual/environment/bin/activate`
+## Windows
+`python -m venv /path/to/new/virtual/environment`
+to activate, run `venv\Scripts\activate`
 
 # Execute
 Invoke the script you wish to run, below example has used `CallQueueAudit.py`
