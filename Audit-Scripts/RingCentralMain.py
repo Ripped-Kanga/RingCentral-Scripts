@@ -69,6 +69,9 @@ def connection_test():
 
   if connect_test_url.response().status_code == 200:
     print("Connection returned 200 OK, proceeding with audit...")
+    # Retrieve company info
+    company_info = connectRequest('/restapi/v2/accounts/~')
+    print (f'Company Name - {company_info.json().companyName}\nCompany Number - {company_info.json().mainNumber}\n')
     return True
   else:
     sys.exit("API did not respond with 200 OK, please check your .env variables and credentails.")
