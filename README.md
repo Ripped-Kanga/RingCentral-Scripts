@@ -38,20 +38,19 @@ Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 - [ ] Optional: After running audit, ability to find all call queues one member is apart of, only print to console???
 
 ## UserAudit.py
-- [x] Build initial version, test and debug.
-	- [x] Currently, pulls only the users name, but core logic loop is established. 
+- [x] Build initial version, test and debug. 
 - [ ] Should pull the following:
 	### User Information
 	- [x] First & Last Name
-	- [ ] Extension Number
-	- [ ] Email
-	- [ ] Contact Number
-	- [ ] Company Name
-	- [ ] Departments
-	- [ ] Permissions (Roles)
-	- [ ] Status
-	- [ ] Setup Wizard State
-	- [ ] Site
+	- [x] Extension Number
+	- [x] Email
+	- [x] Contact Number
+	- [x] Company Name
+	- [x] Departments
+	- [x] Permissions (is administrator?)
+	- [x] Status
+	- [x] Setup Wizard State
+	- [x] Site
 	- [ ] Service Features (Voicemail, SMS, DND, Presence, International Dial Out, Call Forwarding, ect...)
 	### User Device Information
 	- [ ] Device Name
