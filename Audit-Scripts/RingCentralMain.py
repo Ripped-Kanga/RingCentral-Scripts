@@ -83,6 +83,7 @@ def audit_checker (audit_url):
     totalElements = resp.json().paging.totalElements
     calling_function = inspect.stack()[1][3]
 
+    #Invoked if the calling script is UserAudit.py
     if calling_function == "main_user":
       print (f'Found {totalElements} Users:\n')
       ask_audit = str(input("Do you want to customise the conditions of the audit?(y/n: "))
@@ -116,6 +117,7 @@ def audit_checker (audit_url):
         built_url = str(f'/restapi/v1.0/account/~/extension?perPage={totalElements}')
         return (totalElements, built_url)
 
+    #Invoked if the calling script is CallQueueAudit.py
     elif calling_function == "main_callqueue":
       print (f'Found {totalElements} Call Queues:\nIf you want to restrict the scope of the audit to only a certain amount of call queues, enter the amount now, otherwise press enter.')
     audit_limit_input = input()
