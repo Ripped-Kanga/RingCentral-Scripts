@@ -38,7 +38,8 @@ Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 - [ ] Optional: After running audit, ability to find all call queues one member is apart of, only print to console???
 
 ## UserAudit.py
-- [x] Build initial version, test and debug. 
+- [x] Build initial version, test and debug.
+- [x] Write audit data to csv
 - [ ] Should pull the following:
 	### User Information
 	- [x] First & Last Name
@@ -56,5 +57,3 @@ Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 	- [ ] Device Name
 	- [ ] Device URI
 	- [ ] Device Caller ID
-
-
