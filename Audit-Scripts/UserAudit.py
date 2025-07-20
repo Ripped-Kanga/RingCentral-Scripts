@@ -13,11 +13,12 @@ import json
 import time
 import datetime
 import csv
+import pprint
 from RingCentralMain import connection_test, connectRequest, audit_checker
 
 # Global Variables
 start_time = datetime.datetime.now()
-user_datalist = []
+datalist = []
 user_audit = 0
 
 # Start main thread, this handles connection test, as well as parsing returned variable data from audit_checker().
@@ -41,29 +42,50 @@ def main_user():
 	print ("Script runtime was: {} minutes and {} seconds".format(int(m), int(s)))
 	exit (0)
 
-# Receives parsed variable data from audit_checker() and begins audit of users, stores audited data in user_datalist dictionary and parses it to build_user_csv()
+# Receives parsed variable data from audit_checker() and begins audit of users, stores audited data in datalist dictionary and parses it to build_user_csv()
 def get_ringcentral_users(user_count, built_url):
 	resp = connectRequest(built_url)
-	
 	for record in resp.json().records:
 		resp2 = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}')
-		data = json.loads(resp2.text())
+		resp3 = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/device')
+		user_data = json.loads(resp2.text())
+		device_data = json.loads(resp3.text())
+		device_records = device_data['records']
+
+		ext_id = record.id
 		ext_name = record.name
 		ext_number = record.extensionNumber
 		ext_status = record.status
-		ext_site = data.get('site', {}).get('name')
-		ext_company = data.get('contact', {}).get('company')
-		ext_department = data.get('contact', {}).get('department')
-		ext_job_title = data.get('contact', {}).get('jobTitle')
-		ext_email = data.get('contact', {}).get('email')
-		ext_is_admin = data.get('permissions', {}).get('admin', {}).get('enabled')
-		ext_setup_wizard = data.get('setupWizardState')
+		ext_site = user_data.get('site', {}).get('name')
+		ext_company = user_data.get('contact', {}).get('company')
+		ext_department = user_data.get('contact', {}).get('department')
+		ext_job_title = user_data.get('contact', {}).get('jobTitle')
+		ext_email = user_data.get('contact', {}).get('email')
+		ext_is_admin = user_data.get('permissions', {}).get('admin', {}).get('enabled')
+		ext_setup_wizard = user_data.get('setupWizardState')
 		
-		# For Debug
-		# print (f'\u2192\u2192Name: {ext_name}\nExt Number: {ext_number} \nExt Status: {ext_status} \nSite: {ext_site}\nCompany: {ext_company}\nDepartment: {ext_department} \nExt Job Title: {ext_job_title} \nExt Email: {ext_email}\nExt has admin?: {ext_is_admin}\nExt Setup?: {ext_setup_wizard}\n')
-		
-		# Stored audit data.
-		user_datalist.append({
+		# Store user and device audit data, if the user has a device, store the device values, otherwise store blank device values.
+		if device_records:
+			for device in device_records:
+				row = {
+					"Extension Name":      	ext_name,
+					"Extension Number": 		ext_number,
+					"Extension Status":    	ext_status,
+					"Site":     						ext_site,
+					"Company":							ext_company,
+					"Department":						ext_department,
+					"Job Title":						ext_job_title,
+					"Email":								ext_email,
+					"is Administrator?":		ext_is_admin,
+					"Setup Wizard State":		ext_setup_wizard,
+					"Device Name":					device.get('name'),
+					"Device Model":					device.get('model', {}).get('name'),
+					"Device Serial":				device.get('serial'),
+					"Device Status":				device.get('status')
+				}
+				datalist.append(row)
+		else:
+			row = {
 			"Extension Name":      	ext_name,
 			"Extension Number": 		ext_number,
 			"Extension Status":    	ext_status,
@@ -73,33 +95,45 @@ def get_ringcentral_users(user_count, built_url):
 			"Job Title":						ext_job_title,
 			"Email":								ext_email,
 			"is Administrator?":		ext_is_admin,
-			"Setup Wizard State":		ext_setup_wizard
-		})
+			"Setup Wizard State":		ext_setup_wizard,
+			"Device Name":					"",
+			"Device Model":					"",
+			"Device Serial":				"",
+			"Device Status":				""
+		}
+			datalist.append(row)
 
 		# Global variable so that user_main() can report the total audited users.
 		global user_audit
 		user_audit += 1
+
 		print (f'Audited {user_audit} of {user_count} users.')
 
-	#Send the user_datalist dictionary to be written to csv file
-	build_user_csv(user_datalist)
-
+	#Send the datalist dictionary to be written to csv file
+	build_user_csv(datalist)
 
 #Builds the csv file, sets headers.
-def build_user_csv(user_datalist):
+def build_user_csv(datalist):
 	folder_name = 'AuditResults'
 	file_name = 'UserAudit.csv'
 	if not os.path.exists(folder_name):
 		os.makedirs(folder_name)
 	file_path = os.path.join(folder_name, file_name)
-	datalist_jsondump = json.dumps(user_datalist)
-	datalist_user_dict = json.loads(datalist_jsondump)
+
+	#datalist_jsondump = json.dumps(user_datalist)
+	#datalist_user_dict = json.loads(datalist_jsondump)
+	if not datalist:
+		print ("No data in dictionary to write")
+		return
+
+	fieldnames = list(datalist[0].keys())
 	with open(file_path, "w", newline='', encoding="utf-8") as csvfile:
-		writer = csv.DictWriter(csvfile, fieldnames=datalist_user_dict[0].keys())
+		writer = csv.DictWriter(csvfile, fieldnames=fieldnames, extrasaction='ignore')
 		writer.writeheader()
-		for row in datalist_user_dict:
+		for row in datalist:
 			writer.writerow(row)
-		print (f'Wrote CSV file export to {file_path}')
+
+			#print (f'Wrote CSV row export to {file_path}')
 
 # Start Execution
 if __name__ == "__main__":
