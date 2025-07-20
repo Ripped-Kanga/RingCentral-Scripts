@@ -2,7 +2,7 @@
 
 """
 Author:   Alan Saunders
-Purpose:  Uses the RingCentral API to conduct audits on users. 
+Purpose:  Uses the RingCentral API to conduct audits on users and export the results to csv.
 Version:  0.4
 Github:   https://github.com/Ripped-Kanga/RingCentral-Scripts
 """
@@ -19,7 +19,8 @@ from RingCentralMain import connection_test, connectRequest, audit_checker
 start_time = datetime.datetime.now()
 user_datalist = []
 user_audit = 0
-# Start main thread
+
+# Start main thread, this handles connection test, as well as parsing returned variable data from audit_checker().
 def main_user():
 	print (f'Script Start Time: {start_time}')
 	connection_attempt = connection_test()
@@ -40,6 +41,7 @@ def main_user():
 	print ("Script runtime was: {} minutes and {} seconds".format(int(m), int(s)))
 	exit (0)
 
+# Receives parsed variable data from audit_checker() and begins audit of users, stores audited data in user_datalist dictionary and parses it to build_user_csv()
 def get_ringcentral_users(user_count, built_url):
 	resp = connectRequest(built_url)
 	
@@ -56,9 +58,11 @@ def get_ringcentral_users(user_count, built_url):
 		ext_email = data.get('contact', {}).get('email')
 		ext_is_admin = data.get('permissions', {}).get('admin', {}).get('enabled')
 		ext_setup_wizard = data.get('setupWizardState')
-		#For Debug
-		#print (f'\u2192\u2192Name: {ext_name}\nExt Number: {ext_number} \nExt Status: {ext_status} \nSite: {ext_site}\nCompany: {ext_company}\nDepartment: {ext_department} \nExt Job Title: {ext_job_title} \nExt Email: {ext_email}\nExt has admin?: {ext_is_admin}\nExt Setup?: {ext_setup_wizard}\n')
 		
+		# For Debug
+		# print (f'\u2192\u2192Name: {ext_name}\nExt Number: {ext_number} \nExt Status: {ext_status} \nSite: {ext_site}\nCompany: {ext_company}\nDepartment: {ext_department} \nExt Job Title: {ext_job_title} \nExt Email: {ext_email}\nExt has admin?: {ext_is_admin}\nExt Setup?: {ext_setup_wizard}\n')
+		
+		# Stored audit data.
 		user_datalist.append({
 			"Extension Name":      	ext_name,
 			"Extension Number": 		ext_number,
@@ -72,6 +76,7 @@ def get_ringcentral_users(user_count, built_url):
 			"Setup Wizard State":		ext_setup_wizard
 		})
 
+		# Global variable so that user_main() can report the total audited users.
 		global user_audit
 		user_audit += 1
 		print (f'Audited {user_audit} of {user_count} users.')
@@ -94,6 +99,7 @@ def build_user_csv(user_datalist):
 		writer.writeheader()
 		for row in datalist_user_dict:
 			writer.writerow(row)
+		print (f'Wrote CSV file export to {file_path}')
 
 # Start Execution
 if __name__ == "__main__":
