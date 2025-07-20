@@ -68,10 +68,10 @@ def get_ringcentral_users(user_count, built_url):
 		if device_records:
 			for device in device_records:
 				row = {
-					"Extension Name":      	ext_name,
-					"Extension Number": 		ext_number,
-					"Extension Status":    	ext_status,
-					"Site":     						ext_site,
+					"Extension Name":				ext_name,
+					"Extension Number":			ext_number,
+					"Extension Status":			ext_status,
+					"Site":									ext_site,
 					"Company":							ext_company,
 					"Department":						ext_department,
 					"Job Title":						ext_job_title,
@@ -86,10 +86,10 @@ def get_ringcentral_users(user_count, built_url):
 				datalist.append(row)
 		else:
 			row = {
-			"Extension Name":      	ext_name,
-			"Extension Number": 		ext_number,
-			"Extension Status":    	ext_status,
-			"Site":     						ext_site,
+			"Extension Name":				ext_name,
+			"Extension Number":			ext_number,
+			"Extension Status":			ext_status,
+			"Site":									ext_site,
 			"Company":							ext_company,
 			"Department":						ext_department,
 			"Job Title":						ext_job_title,
