@@ -15,7 +15,7 @@ import csv
 from RingCentralMain import connection_test, connectRequest, audit_checker
 
 # Global Variables
-datalist = []
+call_queue_datalist = []
 start_time = datetime.datetime.now()
 
 
@@ -111,29 +111,27 @@ def get_ringcentral_users(id,cq_name,cq_member_ext,cq_extension):
 # Uses the collected call queue information to build a dictionary.
 def build_datalist(cq_name,cq_extension,cq_member,cq_member_ext):
 
-	datalist.append({
+	call_queue_datalist.append({
 		"Call Queue Name":      cq_name,
 		"Call Queue Extension": cq_extension,
 		"Call Queue Member":    cq_member,
 		"Member Extension":     cq_member_ext
 	})
-	build_csv(datalist)
+	build_csv(call_queue_datalist)
 
 # Builds the csv file, sets headers. 
-def build_csv(datalist):
+def build_csv(call_queue_datalist):
 	folder_name = 'AuditResults'
 	file_name = 'CallQueueAudit.csv'
 	if not os.path.exists(folder_name):
 		os.makedirs(folder_name)
 	file_path = os.path.join(folder_name, file_name)
-	datalist_jsondump = json.dumps(datalist)
+	datalist_jsondump = json.dumps(call_queue_datalist)
 	datalist_json = json.loads(datalist_jsondump)
 	with open(file_path, "w", newline='', encoding="utf-8") as csvfile:
 		writer = csv.DictWriter(csvfile, fieldnames=datalist_json[0].keys())
 		writer.writeheader()
 		for row in datalist_json:
-		#enable below print for debugging
-		#print (row['Call Queue Name'], row['Call Queue Extension'], row['Call Queue Member'], row['Member Extension'])
 			writer.writerow(row)
 
 # Start Execution
