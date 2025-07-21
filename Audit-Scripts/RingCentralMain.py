@@ -14,7 +14,8 @@ import time
 import datetime
 import csv
 from dotenv import load_dotenv
-from ringcentral import SDK
+from ringcentral.http.api_exception import ApiException
+from ringcentral import SDK, http
 import inspect
 from pick import pick
 load_dotenv()
@@ -33,35 +34,26 @@ platform.login( jwt=os.environ.get('RC_JWT_TOKEN') )
 
 # Perform requests while staying below API limit. Exit script if retry_limit hits 5. 
 def connectRequest(url):
-  for connectAttempt in range(retry_limit):
-    resp = platform.get(url)
-
-    # Set Header variables
-    http_status = resp.response().status_code
-    headers = resp.response().headers
-    api_limit = int(headers["X-Rate-Limit-Limit"])
-    api_limit_remaining = int(headers["X-Rate-Limit-Remaining"])
-    #for debugging
-    #print (api_limit_remaining)
-    api_limit_window = int(headers["X-Rate-Limit-Window"])
-
-    if not http_status == 200:
-      print (f'Rate limiting has been applied, waiting for {api_limit_window} seconds, number of retries left is {retry_limit - retry_attempts}')
-      retry_attempts =+ 1
-      time.sleep(api_limit_window)
-      continue
-
-    elif api_limit_remaining == 0:
-      retry_after = api_limit_window
-      print(f'Rate limit has been hit, waiting for {retry_after} seconds')
-      time.sleep(retry_after)
-      continue
-    
-    else:
-      return resp
-
-  raise Exception(f"Rate limiting has been hit {retry_limit} times, exiting.")
-
+  while True:
+    try:
+      resp = platform.get(url)
+      # Set Header variables
+      http_status = resp.response().status_code
+      headers = resp.response().headers
+      api_limit = int(headers["X-Rate-Limit-Limit"])
+      api_limit_remaining = int(headers["X-Rate-Limit-Remaining"])
+      api_limit_window = int(headers["X-Rate-Limit-Window"])
+      #print (resp.error())
+      if api_limit_remaining == 0:
+        retry_after = api_limit_window
+        print(f'Rate limit has been hit, waiting for {retry_after} seconds')
+        time.sleep(retry_after)
+        continue
+        
+      else:
+        return resp
+    except Exception as e:
+      print (f'Error during API request: {e}')
 
 # Performs a connection test to the RingCentral API and returns True if the response is HTTP 200. 
 def connection_test():
@@ -70,8 +62,8 @@ def connection_test():
   if connect_test_url.response().status_code == 200:
     print("Connection returned 200 OK, proceeding with audit...")
     # Retrieve company info
-    company_info = connectRequest('/restapi/v2/accounts/~')
-    print (f'Company Name - {company_info.json().companyName}\nCompany Number - {company_info.json().mainNumber}\n')
+    company_info = json.loads(connect_test_url.text())
+    print (f'Company Name - {company_info.get('companyName')}\nCompany Number - {company_info.get('mainNumber')}\n')
     return True
   else:
     sys.exit("API did not respond with 200 OK, please check your .env variables and credentails.")
