@@ -55,6 +55,7 @@ Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 	- [x] Site
 	- [ ] Service Features (Voicemail, SMS, DND, Presence, International Dial Out, Call Forwarding, ect...)
 	### User Device Information
-	- [ ] Device Name
-	- [ ] Device URI
-	- [ ] Device Caller ID
+	- [x] Device Name
+	- [x] Device Model
+	- [x] Device Serial
+	- [x] Device Status
