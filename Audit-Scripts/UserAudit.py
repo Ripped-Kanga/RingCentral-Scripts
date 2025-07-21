@@ -3,7 +3,7 @@
 """
 Author:   Alan Saunders
 Purpose:  Uses the RingCentral API to conduct audits on users and export the results to csv.
-Version:  0.4
+Version:  0.6
 Github:   https://github.com/Ripped-Kanga/RingCentral-Scripts
 """
 # Import libraries
@@ -120,8 +120,6 @@ def build_user_csv(datalist):
 		os.makedirs(folder_name)
 	file_path = os.path.join(folder_name, file_name)
 
-	#datalist_jsondump = json.dumps(user_datalist)
-	#datalist_user_dict = json.loads(datalist_jsondump)
 	if not datalist:
 		print ("No data in dictionary to write")
 		return
