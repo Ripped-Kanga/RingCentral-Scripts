@@ -13,6 +13,7 @@ import time
 import datetime
 import csv
 from RingCentralMain import connection_test, connectRequest, audit_checker
+import pprint
 
 # Global Variables
 call_queue_datalist = []
@@ -81,41 +82,51 @@ def get_ringcentral_callqueue(audit_limit):
 		sys.exit("error occured: " + str(e))
 
 
-# Iterate through call queues and get member IDs, parse to get_ringcentral_users()
-# API Reference -> https://developers.ringcentral.com/guide/voice/call-routing/manual/call-queues ## Read Call Queue Members
-def get_ringcentral_callqueue_members(id,cq_name,cq_extension):
-
+# Request extension details and parse Call Queue Name, Extension Name, and Extension Number to build_datalist()
+# API Reference -> https://developers.ringcentral.com/api-reference/Extensions/listExtensions
+def get_ringcentral_callqueue_members(call_queue_id,cq_name,cq_extension):
 	try:
-		resp = connectRequest('/restapi/v1.0/account/~/call-queues/'+str(id)+'/members')
+		resp = connectRequest('/restapi/v1.0/account/~/call-queues/'+str(call_queue_id)+'/presence')
+		call_queue_members = json.loads(resp.text())
 
-		for record in resp.json().records:
-			cq_member_ext = (record.extensionNumber)
-			get_ringcentral_users(record.id,cq_name,cq_member_ext,cq_extension)
+		# Initialise default variable values to protect against loop crash if a call queue has no members.
+		cq_member = str('No member')
+		cq_member_ext = ''
+		cq_member_accept_current_queue_calls = ''
+		cq_member_accept_calls = ''
 
+		for member in call_queue_members['records']:
+			cq_member = member.get('member', {}).get('name')
+			if cq_member:
+				cq_member_ext = member.get('member', {}).get('extensionNumber')
+				cq_member_accept_current_queue_calls = member.get('acceptCurrentQueueCalls')
+				cq_member_accept_calls = member.get('acceptQueueCalls')
+			else:
+				cq_member = str('No member')
+				cq_member_ext = ''
+				cq_member_accept_current_queue_calls = ''
+				cq_member_accept_calls = ''
+
+			print(f'\u2192 Name: {cq_member} - Member Extension: {cq_member_ext} - Accept Current Queue Calls: {cq_member_accept_current_queue_calls} - Accept Queue Calls: {cq_member_accept_calls}')
+			build_datalist(cq_name,cq_extension,cq_member,cq_member_ext,cq_member_accept_calls, cq_member_accept_current_queue_calls)
+		
+		# If no members found in any call queues, build list retrieving call queue details but populate 'No Members'
+		if not call_queue_members['records']:
+			
+			build_datalist(cq_name,cq_extension,cq_member,cq_member_ext,cq_member_accept_calls, cq_member_accept_current_queue_calls)
 	except Exception as e:
 		sys.exit("error occured: " + str(e))
 
-# Request extension details and parse Call Queue Name, Extension Name, and Extension Number to build_datalist()
-# API Reference -> https://developers.ringcentral.com/api-reference/Extensions/listExtensions
-def get_ringcentral_users(id,cq_name,cq_member_ext,cq_extension):
-
-	try:
-		resp = connectRequest('/restapi/v1.0/account/~/extension/'+str(id))
-		cq_member = (resp.json().name)
-		print(f'\u2192{resp.json().name} - {cq_member_ext}')
-		build_datalist(cq_name,cq_extension,cq_member,cq_member_ext)
-
-	except Exception as e:
-		sys.exit(e)
-
 # Uses the collected call queue information to build a dictionary.
-def build_datalist(cq_name,cq_extension,cq_member,cq_member_ext):
+def build_datalist(cq_name,cq_extension,cq_member,cq_member_ext, cq_member_accept_calls, cq_member_accept_current_queue_calls):
 
 	call_queue_datalist.append({
-		"Call Queue Name":      cq_name,
-		"Call Queue Extension": cq_extension,
-		"Call Queue Member":    cq_member,
-		"Member Extension":     cq_member_ext
+		"Call Queue Name":      				cq_name,
+		"Call Queue Extension": 				cq_extension,
+		"Call Queue Member":    				cq_member,
+		"Member Extension":     				cq_member_ext,
+		"Accept Queue Calls?":					cq_member_accept_calls,
+		"Accept Current Queue Calls?":	cq_member_accept_current_queue_calls
 	})
 	build_csv(call_queue_datalist)
 
