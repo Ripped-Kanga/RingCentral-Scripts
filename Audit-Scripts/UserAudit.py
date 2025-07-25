@@ -27,8 +27,8 @@ def main_user():
 	connection_attempt = connection_test()
 	if connection_attempt:
 		print ("Proceeding with User Audit, note that as a minimum, the 'User' type is already filtered for.")
-		user_count, built_url = audit_checker('/restapi/v1.0/account/~/extension?type=User')
-		get_ringcentral_users(user_count, built_url)
+		filter_user_count, user_count, built_url = audit_checker('/restapi/v1.0/account/~/extension?type=User')
+		get_ringcentral_users(filter_user_count, user_count, built_url)
 	else:
 		sys.exit("API did not respond with 200 OK, please check your .env variables and credentails.")
 
@@ -37,13 +37,16 @@ def main_user():
 	m, s  = divmod(runtime, 60)
 
 	print ("Script has completed, audit results:")
-	print (f'Audited {user_audit} users of {user_count} found users.')
+	if filter_user_count:
+		print(f'Audited {user_audit} users of {filter_user_count} found filtered users.')
+	else:
+		print (f'Audited {user_audit} users of {user_count} found users.')
 	print (f'\nScript End Time:    {end_time}')
 	print ("Script runtime was: {} minutes and {} seconds".format(int(m), int(s)))
 	exit (0)
 
 # Receives parsed variable data from audit_checker() and begins audit of users, stores audited data in datalist dictionary and parses it to build_user_csv()
-def get_ringcentral_users(user_count, built_url):
+def get_ringcentral_users(filter_user_count, user_count, built_url):
 	resp = connectRequest(built_url)
 	for record in resp.json().records:
 		resp2 = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}')
@@ -106,10 +109,12 @@ def get_ringcentral_users(user_count, built_url):
 		# Global variable so that user_main() can report the total audited users.
 		global user_audit
 		user_audit += 1
+		if filter_user_count:
+			print (f'Audited {user_audit} of {filter_user_count} filtered users.')
+		else:
+			print (f'Audited {user_audit} of {user_count} users.')
 
-		print (f'Audited {user_audit} of {user_count} users.')
-
-	#Send the datalist dictionary to be written to csv file
+	#Parse the datalist dictionary to be written to csv file
 	build_user_csv(datalist)
 
 #Builds the csv file, sets headers.
@@ -130,8 +135,6 @@ def build_user_csv(datalist):
 		writer.writeheader()
 		for row in datalist:
 			writer.writerow(row)
-
-			#print (f'Wrote CSV row export to {file_path}')
 
 # Start Execution
 if __name__ == "__main__":
