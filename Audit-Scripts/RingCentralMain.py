@@ -43,7 +43,6 @@ def connectRequest(url):
       api_limit = int(headers["X-Rate-Limit-Limit"])
       api_limit_remaining = int(headers["X-Rate-Limit-Remaining"])
       api_limit_window = int(headers["X-Rate-Limit-Window"])
-      #print (resp.error())
       if api_limit_remaining == 0:
         retry_after = api_limit_window
         print(f'Rate limit has been hit, waiting for {retry_after} seconds')
@@ -100,14 +99,17 @@ def audit_checker (audit_url):
           case _:
             sys.exit("An error occured in the pick list.")
 
-
-        built_url = str(f'/restapi/v1.0/account/~/extension?perPage={totalElements}&{query_option}')
-        return (totalElements, built_url)
+        built_url = str(f'/restapi/v1.0/account/~/extension?perPage={totalElements}&Type=User&{query_option}')
+        filter_user_count = connectRequest(built_url).json().paging.totalElements
+        filter_user_built_url = str(f'/restapi/v1.0/account/~/extension?perPage={filter_user_count}&Type=User&{query_option}')
+        print (filter_user_count)
+        return (filter_user_count, totalElements, filter_user_built_url)
 
       elif ask_audit.lower() == "n":
         print("No customisation will apply to the user audit, proceeding.")
         built_url = str(f'/restapi/v1.0/account/~/extension?perPage={totalElements}')
-        return (totalElements, built_url)
+        filter_user_count = False
+        return (filter_user_count, totalElements, built_url)
 
     #Invoked if the calling script is CallQueueAudit.py
     elif calling_function == "main_callqueue":
