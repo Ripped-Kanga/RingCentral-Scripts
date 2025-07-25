@@ -33,6 +33,8 @@ Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 # Implementation Tracking
 ## CallQueueAudit.py
 - [ ] Redo script logic to better acommodate API limits and better error checking.
+	- [x] Massively improved call queue audit performance, utilises different API call to retrieve call queue users.
+	- [ ] Improve error checking
 - [x] Implement rate limit checking and prevention.
 - [x] Implement audit scope limit, display how many queues exist on the RingCentral instance and ask the user how many they want to audit. 
 - [ ] Audit based off call queue name, useful if you only need info on one call queue. Should accept Call Queue Name or Call Queue Extension
