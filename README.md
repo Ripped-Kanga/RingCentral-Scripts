@@ -34,7 +34,9 @@ Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 ## CallQueueAudit.py
 - [ ] Redo script logic to better acommodate API limits and better error checking.
 	- [x] Massively improved call queue audit performance, utilises different API call to retrieve call queue users.
-	- [ ] Improve error checking
+	- [-] Improve error checking
+		- [x] Will catch if a call queue has no members and write empty values to the csv for the member info. Call queue info will still be added.
+		- [ ] Improve API error handling.
 - [x] Implement rate limit checking and prevention.
 - [x] Implement audit scope limit, display how many queues exist on the RingCentral instance and ask the user how many they want to audit. 
 - [ ] Audit based off call queue name, useful if you only need info on one call queue. Should accept Call Queue Name or Call Queue Extension
@@ -55,7 +57,7 @@ Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 	- [x] Status
 	- [x] Setup Wizard State
 	- [x] Site
-	- [ ] Service Features (Voicemail, SMS, DND, Presence, International Dial Out, Call Forwarding, ect...)
+	- [ ] Service Features (Voicemail, DND, Presence, International Dial Out, Call Forwarding, ect...)
 	### User Device Information
 	- [x] Device Name
 	- [x] Device Model
