@@ -31,21 +31,27 @@ Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 `python CallQueueAudit.py`
 
 # Implementation Tracking
-## CallQueueAudit.py
-- [ ] Redo script logic to better acommodate API limits and better error checking.
-	- [x] Massively improved call queue audit performance, utilises different API call to retrieve call queue users.
-	- [-] Improve error checking
-		- [x] Will catch if a call queue has no members and write empty values to the csv for the member info. Call queue info will still be added.
-		- [ ] Improve API error handling.
+## General
 - [x] Implement rate limit checking and prevention.
-- [x] Implement audit scope limit, display how many queues exist on the RingCentral instance and ask the user how many they want to audit. 
+- [ ] Improve API error handling.
+- [x] Added filter options for initial API call to:
+	- [x] UserAudit.py
+	- [ ] CallQueueAudit.py
+
+## CallQueueAudit.py
+- [x] Redo script logic to better acommodate API limits and better error checking.
+	- [x] Massively improved call queue audit performance, utilises different API call to retrieve call queue users.
+	- [x] Improve error checking
+		- [x] Will catch if a call queue has no members and write empty values to the csv for the member info. Call queue info will still be added.
+- [x] Implement audit scope limit, display how many queues exist on the RingCentral instance and ask the user how many they want to audit.#will remove and replace with filter options similar to UserAudit.py
 - [ ] Audit based off call queue name, useful if you only need info on one call queue. Should accept Call Queue Name or Call Queue Extension
-- [ ] Optional: After running audit, ability to find all call queues one member is apart of, only print to console???
+- [ ] After running audit, ability to find all call queues one member is apart of, only print to console???
 
 ## UserAudit.py
 - [x] Build initial version, test and debug.
 - [x] Write audit data to csv
 - [ ] Should pull the following:
+- [ ] Store User IDs in json for later use, write IDs to csv file column one.
 	### User Information
 	- [x] First & Last Name
 	- [x] Extension Number
