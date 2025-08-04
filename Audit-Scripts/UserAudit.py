@@ -3,7 +3,7 @@
 """
 Author:   Alan Saunders
 Purpose:  Uses the RingCentral API to conduct audits on users and export the results to csv.
-Version:  0.6
+Version:  0.7
 Github:   https://github.com/Ripped-Kanga/RingCentral-Scripts
 """
 # Import libraries
@@ -48,21 +48,21 @@ def main_user():
 # Receives parsed variable data from audit_checker() and begins audit of users, stores audited data in datalist dictionary and parses it to build_user_csv()
 def get_ringcentral_users(filter_user_count, user_count, built_url):
 	resp = connectRequest(built_url)
-	pprint.pprint(resp)
 	for record in resp.json().records:
-		resp2 = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}')
-		resp3 = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/device')
-		resp4 = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/assigned-role')
-		user_data = json.loads(resp2.text())
-		device_data = json.loads(resp3.text())
+		user_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}')
+		device_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/device')
+		user_role_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/assigned-role')
+		user_presence_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/presence')
+		user_data = json.loads(user_resp.text())
+		device_data = json.loads(device_resp.text())
+		user_presence_data = json.loads(user_presence_resp.text())
 		device_records = device_data['records']
-		user_roles_list = resp4.json().records
+		user_roles_list = user_role_resp.json().records
 		if user_roles_list:
 			for roles in user_roles_list:
 				ext_assigned_role = roles.displayName
 		else:
 			ext_assigned_role = ""
-			
 
 		ext_id = record.id
 		ext_name = record.name
@@ -75,8 +75,8 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 		ext_email = user_data.get('contact', {}).get('email')
 		ext_is_admin = user_data.get('permissions', {}).get('admin', {}).get('enabled')
 		ext_setup_wizard = user_data.get('setupWizardState')
+		ext_dnd_status = user_presence_data.get('dndStatus')
 
-		
 		# Store user and device audit data, if the user has a device, store the device values, otherwise store blank device values.
 		if device_records:
 			for device in device_records:
@@ -89,6 +89,7 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 					"Department":						ext_department,
 					"Job Title":						ext_job_title,
 					"Email":								ext_email,
+					"DND Status":						ext_dnd_status,
 					"User Assigned Role":		ext_assigned_role,
 					"is Administrator?":		ext_is_admin,
 					"Setup Wizard State":		ext_setup_wizard,
@@ -108,6 +109,7 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 			"Department":						ext_department,
 			"Job Title":						ext_job_title,
 			"Email":								ext_email,
+			"DND Status":						ext_dnd_status,
 			"User Assigned Role":		ext_assigned_role,
 			"is Administrator?":		ext_is_admin,
 			"Setup Wizard State":		ext_setup_wizard,
@@ -117,7 +119,7 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 			"Device Status":				""
 		}
 			datalist.append(row)
-
+		pprint.pprint(row, indent=2, sort_dicts=False)
 		# Global variable so that user_main() can report the total audited users.
 		global user_audit
 		user_audit += 1
