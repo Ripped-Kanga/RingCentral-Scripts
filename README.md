@@ -60,6 +60,7 @@ Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 	- [x] Company Name
 	- [x] Departments
 	- [x] Permissions (is administrator?)
+	- [x] User Assigned Role
 	- [x] Status
 	- [x] Setup Wizard State
 	- [x] Site
