@@ -102,7 +102,6 @@ def audit_checker (audit_url):
         built_url = str(f'/restapi/v1.0/account/~/extension?perPage={totalElements}&Type=User&{query_option}')
         filter_user_count = connectRequest(built_url).json().paging.totalElements
         filter_user_built_url = str(f'/restapi/v1.0/account/~/extension?perPage={filter_user_count}&type=User&{query_option}')
-        print (filter_user_count)
         return (filter_user_count, totalElements, filter_user_built_url)
 
       elif ask_audit.lower() == "n":
