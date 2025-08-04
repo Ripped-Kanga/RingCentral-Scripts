@@ -56,15 +56,14 @@ Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 	- [x] First & Last Name
 	- [x] Extension Number
 	- [x] Email
-	- [x] Contact Number
-	- [x] Company Name
+	- [ ] Contact Number
 	- [x] Departments
 	- [x] Permissions (is administrator?)
 	- [x] User Assigned Role
 	- [x] Status
 	- [x] Setup Wizard State
 	- [x] Site
-	- [ ] Service Features (Voicemail, DND, Presence, International Dial Out, Call Forwarding, ect...)
+	- [x] DND Status
 	### User Device Information
 	- [x] Device Name
 	- [x] Device Model
