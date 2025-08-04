@@ -52,7 +52,7 @@ def connectRequest(url):
       else:
         return resp
     except Exception as e:
-      print (f'Error during API request: {e}')
+      print (f'Error during API request: Error \u2192 {e}')
 
 # Performs a connection test to the RingCentral API and returns True if the response is HTTP 200. 
 def connection_test():
@@ -77,9 +77,14 @@ def audit_checker (audit_url):
     #Invoked if the calling script is UserAudit.py
     if calling_function == "main_user":
       print (f'Found {totalElements} Users:\n')
-      ask_audit = str(input("Do you want to customise the conditions of the audit?(y/n: "))
+      
+      while True:
+        ask_audit = str(input("Do you want to customise the conditions of the audit?(y/n: "))
+        if ask_audit in ['y', 'n']:
+          break
+        print("Invalid input. Please enter 'y' or 'n'.")
 
-      if ask_audit.lower() == "y":
+      if ask_audit == "y":
         print("Customised audit selected.")
         # load pick menu
         title = 'Select a query option below: (You can only choose one!)'
@@ -104,24 +109,26 @@ def audit_checker (audit_url):
         filter_user_built_url = str(f'/restapi/v1.0/account/~/extension?perPage={filter_user_count}&type=User&{query_option}')
         return (filter_user_count, totalElements, filter_user_built_url)
 
-      elif ask_audit.lower() == "n":
+      elif ask_audit == "n":
         print("No customisation will apply to the user audit, proceeding.")
         built_url = str(f'/restapi/v1.0/account/~/extension?perPage={totalElements}&type=User')
         filter_user_count = False
         return (filter_user_count, totalElements, built_url)
 
+
     #Invoked if the calling script is CallQueueAudit.py
     elif calling_function == "main_callqueue":
-      print (f'Found {totalElements} Call Queues:\nIf you want to restrict the scope of the audit to only a certain amount of call queues, enter the amount now, otherwise press enter.')
-    audit_limit_input = input()
-
-    if audit_limit_input:
-      print(f'Proceeding with audit within the defined constrainst of {audit_limit_input} call queues.\n')
-      return (int(audit_limit_input),totalElements)
-
-    else:
-      print("Audit limit not set, proceeding with full call queue audit.")
-      return (audit_limit_input,totalElements)
-
+      print (f'Found {totalElements} Call Queues:\n')
+      while True:
+        audit_limit_input = input(f'If you want to restrict the scope of the audit to only a certain amount of call queues, enter the amount now, otherwise press enter:')
+        if audit_limit_input == "":
+          print("Audit limit not set, proceeding with full call queue audit.")
+          return (audit_limit_input,totalElements)
+        elif audit_limit_input.isdigit():
+          print(f'Proceeding with audit within the defined constrainst of {audit_limit_input} call queues.\n')
+          return (int(audit_limit_input),totalElements)
+        else:
+          print ("\nInvalid input. Please enter the number of call queues to audit, or to audit all just press enter.")
+      
   except Exception as e:
     sys.exit("error occured:" + str(e))
