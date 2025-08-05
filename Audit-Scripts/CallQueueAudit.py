@@ -111,9 +111,9 @@ def get_ringcentral_callqueue_members(call_queue_id,cq_name,cq_extension):
 			build_datalist(cq_name,cq_extension,cq_member,cq_member_ext,cq_member_accept_calls, cq_member_accept_current_queue_calls)
 		
 		# If no members found in any call queues, build list retrieving call queue details but populate 'No Members'
-		if not call_queue_members['records']:
+		#if not call_queue_members['records']:
 			
-			build_datalist(cq_name,cq_extension,cq_member,cq_member_ext,cq_member_accept_calls, cq_member_accept_current_queue_calls)
+			#build_datalist(cq_name,cq_extension,cq_member,cq_member_ext,cq_member_accept_calls, cq_member_accept_current_queue_calls)
 	except Exception as e:
 		sys.exit("error occured: " + str(e))
 
@@ -147,4 +147,12 @@ def build_csv(call_queue_datalist):
 
 # Start Execution
 if __name__ == "__main__":
+	#start main_callqueue() and listen for keyboard interrupts
+	try:
 		main_callqueue()
+	except KeyboardInterrupt:
+		print('\nInterrupted by keyboard CTRL + C, exiting...\n')
+		try:
+			sys.exit(130)
+		except SystemExit:
+			os._exit(130)
