@@ -152,4 +152,12 @@ def build_user_csv(datalist):
 
 # Start Execution
 if __name__ == "__main__":
-	main_user()
+	#start main_user() and listen for keyboard interrupts
+	try:
+		main_user()
+	except KeyboardInterrupt:
+		print('\nInterrupted by keyboard CTRL + C, exiting...\n')
+		try:
+			sys.exit(130)
+		except SystemExit:
+			os._exit(130)
