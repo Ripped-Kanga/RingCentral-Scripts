@@ -21,8 +21,6 @@ from pick import pick
 load_dotenv()
 
 # Global Variables
-retry_limit = 6
-retry_attempts = 0
 
 # RingCentral SDK
 rcsdk = SDK( os.environ.get('RC_APP_CLIENT_ID'),
@@ -32,7 +30,7 @@ platform = rcsdk.platform()
 platform.login( jwt=os.environ.get('RC_JWT_TOKEN') )
 
 
-# Perform requests while staying below API limit. Exit script if retry_limit hits 5. 
+# Perform requests while staying below API limit.
 def connectRequest(url):
   while True:
     try:
@@ -52,9 +50,9 @@ def connectRequest(url):
       else:
         return resp
     except Exception as e:
-      print (f'Error during API request: Error \u2192 {e}')
+      print (f'Error during API request: Error \u25BA\u25BA {e}')
 
-# Performs a connection test to the RingCentral API and returns True if the response is HTTP 200. 
+# Performs a connection test to the RingCentral API and returns True if the response is HTTP 200, also retrieves and prints the company info.
 def connection_test():
   connect_test_url = connectRequest('/restapi/v2/accounts/~')
 
@@ -90,24 +88,33 @@ def audit_checker (audit_url):
         title = 'Select a query option below: (You can only choose one!)'
         query_options = ['extensionNumber', 'email', 'status']
         option, index = pick(query_options, title, indicator='>>')
+        while True:
+          match option:
+            case 'extensionNumber':
+              query_extension = int(input("Enter the Extension Number: "))
+              query_option = str(f"{option}="+str(query_extension))
+            case 'email':
+              query_email = (input("Enter the Email Address: "))
+              query_option = (f'{option}='+query_email)
+            case 'status':
+              while True:
+                query_status = str(input("Enter the User Status (Enabled, Disabled, NotActivated, Unassigned: "))
+                if query_status in ['Enabled', 'Disabled', 'NotActivated', 'Unassigned']:
+                  break
+                print ("Invalid input, please review the options and try again.")
+              query_option = str(f'{option}='+query_status)
+            case _:
+              sys.exit("An error occured in the pick list.")
 
-        match option:
-          case 'extensionNumber':
-            query_extension = int(input("Enter the Extension Number: "))
-            query_option = str(f"{option}="+str(query_extension))
-          case 'email':
-            query_email = (input("Enter the Email Address: "))
-            query_option = (f'{option}='+query_email)
-          case 'status':
-            query_status = str(input("Enter the User Status (Enabled, Disabled, NotActivated, Unassigned: "))
-            query_option = str(f"{option}="+query_status.capitalize())
-          case _:
-            sys.exit("An error occured in the pick list.")
-
-        built_url = str(f'/restapi/v1.0/account/~/extension?perPage={totalElements}&Type=User&{query_option}')
-        filter_user_count = connectRequest(built_url).json().paging.totalElements
-        filter_user_built_url = str(f'/restapi/v1.0/account/~/extension?perPage={filter_user_count}&type=User&{query_option}')
-        return (filter_user_count, totalElements, filter_user_built_url)
+          built_url = str(f'/restapi/v1.0/account/~/extension?perPage={totalElements}&type=User&{query_option}')
+          filter_user_count = connectRequest(built_url).json().paging.totalElements
+          filter_user_built_url = str(f'/restapi/v1.0/account/~/extension?perPage={filter_user_count}&type=User&{query_option}')
+          if filter_user_count:
+            print (f'Found {filter_user_count} users with current filter parameters, starting audit.')
+            return (filter_user_count, totalElements, filter_user_built_url) 
+          print ("No results returned from filter paramaters. Please review your filter paramaters and try again.")
+            
+            
 
       elif ask_audit == "n":
         print("No customisation will apply to the user audit, proceeding.")
@@ -131,4 +138,4 @@ def audit_checker (audit_url):
           print ("\nInvalid input. Please enter the number of call queues to audit, or to audit all just press enter.")
       
   except Exception as e:
-    sys.exit("error occured:" + str(e))
+    sys.exit(f'Error occured: '+'{e}')
