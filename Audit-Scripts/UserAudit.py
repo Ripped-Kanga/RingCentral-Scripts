@@ -81,6 +81,7 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 		if device_records:
 			for device in device_records:
 				row = {
+					"User ID":							ext_id,
 					"Extension Name":				ext_name,
 					"Extension Number":			ext_number,
 					"Extension Status":			ext_status,
@@ -101,6 +102,7 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 				datalist.append(row)
 		else:
 			row = {
+			"User ID":							ext_id,
 			"Extension Name":				ext_name,
 			"Extension Number":			ext_number,
 			"Extension Status":			ext_status,
@@ -119,14 +121,18 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 			"Device Status":				""
 		}
 			datalist.append(row)
-		pprint.pprint(row, indent=2, sort_dicts=False)
+		
 		# Global variable so that user_main() can report the total audited users.
 		global user_audit
 		user_audit += 1
 		if filter_user_count:
-			print (f'Audited {user_audit} of {filter_user_count} filtered users.')
+			print (f'\nAudited {user_audit} of {filter_user_count} filtered users.\n')
+			print (f'### {ext_name} ###')
+			pprint.pprint(row, indent=4, sort_dicts=False)
 		else:
-			print (f'Audited {user_audit} of {user_count} users.')
+			print (f'\nAudited {user_audit} of {user_count} users.\n')
+			print (f'### {ext_name} ###')
+			pprint.pprint(row, indent=4, sort_dicts=False)
 
 	#Parse the datalist dictionary to be written to csv file
 	build_user_csv(datalist)
