@@ -50,8 +50,10 @@ Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 ## UserAudit.py
 - [x] Build initial version, test and debug.
 - [x] Write audit data to csv
+- [ ] Store User IDs in json for later use.
+- [x] Write IDs to csv file column one.
+
 - [ ] Should pull the following:
-- [ ] Store User IDs in json for later use, write IDs to csv file column one.
 	### User Information
 	- [x] First & Last Name
 	- [x] Extension Number
