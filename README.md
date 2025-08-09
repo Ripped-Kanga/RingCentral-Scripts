@@ -71,3 +71,9 @@ Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 	- [x] Device Model
 	- [x] Device Serial
 	- [x] Device Status
+
+## PhoneNumberAuditpy
+- [x] Build initial version, test and debug.
+- [x] Write audit data to csv
+- [x] Implement basic filter parameters. 
+- [ ] Implement more advanced filter parameters
