@@ -1,11 +1,5 @@
 #!/usr/bin/python
 
-"""
-Author:   Alan Saunders
-Purpose:  Uses the RingCentral API to conduct audits on users and export the results to csv.
-Version:  0.7
-Github:   https://github.com/Ripped-Kanga/RingCentral-Scripts
-"""
 # Import libraries
 import os
 import sys
@@ -14,7 +8,7 @@ import time
 import datetime
 import csv
 import pprint
-from RingCentralMain import connection_test, connectRequest, audit_checker
+from RingCentralMain import housekeeping, connection_test, connectRequest, audit_checker
 
 # Global Variables
 start_time = datetime.datetime.now()
@@ -23,6 +17,7 @@ user_audit = 0
 
 # Start main thread, this handles connection test, as well as parsing returned variable data from audit_checker().
 def main_user():
+	housekeeping()
 	print (f'Script Start Time: {start_time}')
 	connection_attempt = connection_test()
 	if connection_attempt:
