@@ -174,5 +174,43 @@ def audit_checker (audit_url):
 				else:
 					print ("\nInvalid input. Please enter the number of call queues to audit, or to audit all just press enter.")
 
+		# Invoked if the calling script is PhoneNumberAudit.py
+		elif calling_function == "main_phone_number_audit":
+			print (f'Found {totalElements} Phone Numbers:\n')
+			
+			while True:
+				ask_audit = str(input("Do you want to customise the conditions of the audit?(y/n: "))
+				if ask_audit in ['y', 'n']:
+					break
+				print("Invalid input. Please enter 'y' or 'n'.")
+			
+			if ask_audit == 'y':
+				# Load pick menu
+				title = 'Select a query option below: (You can only choose one!)'
+				query_options = ['CompanyNumber', 'PhoneLine', 'DirectNumber', 'Inventory']
+				option, index = pick(query_options, title, indicator='\u25BA\u25BA')
+				match option:
+					case 'CompanyNumber':
+						query_option = option
+					case 'DirectNumber':
+						query_option = option
+					case 'Inventory':
+						query_option = option
+					case 'PhoneLine':
+						query_option = option
+					case _:
+						sys.exit("An error occured in the pick list.")
+
+				built_url = str(f'/restapi/v2/accounts/~/phone-numbers?usageType={query_option}')
+				filtered_phone_number_count = connectRequest(built_url).json().paging.totalElements
+				filtered_phone_number_built_url = str(f'/restapi/v2/accounts/~/phone-numbers?usageType={query_option}')
+				return (filtered_phone_number_count, totalElements, filtered_phone_number_built_url)
+
+			elif ask_audit == 'n':
+				print ("Proceeding with full Phone Number audit...")
+				built_url = f'/restapi/v2/accounts/~/phone-numbers?perPage={totalElements}'
+				filtered_phone_number_count = False
+				return (filtered_phone_number_count, totalElements, built_url)
+
 	except Exception as e:
 		sys.exit(f'Error occured: '+ str(e))
