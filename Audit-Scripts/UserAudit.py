@@ -133,7 +133,7 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 			"Job Title":													ext_job_title,
 			"Email":															ext_email,
 			"DND Status":													ext_dnd_status,
-			"Business Hours Forward Destination":	ext_bhr_fw_destination_int_name,
+			"Business Hours Forward Destination":	ext_bhr_fw_dest,
 			"User Assigned Role":									ext_assigned_role,
 			"is Administrator?":									ext_is_admin,
 			"Setup Wizard State":									ext_setup_wizard,
