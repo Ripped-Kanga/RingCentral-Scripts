@@ -52,6 +52,7 @@ Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 - [x] Write audit data to csv
 - [ ] Store User IDs in json for later use.
 - [x] Write IDs to csv file column one.
+- [ ] Add catch for running unfilted params, skip unassigned extensions so as to not crash the script. 
 
 - [ ] Should pull the following:
 	### User Information
@@ -66,6 +67,7 @@ Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 	- [x] Setup Wizard State
 	- [x] Site
 	- [x] DND Status
+	- [x] Business Hours Forward Destination
 	### User Device Information
 	- [x] Device Name
 	- [x] Device Model
