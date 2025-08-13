@@ -2,7 +2,7 @@
 
 __author__ = "Alan Saunders"
 __purpose__ = "Uses the RingCentral API to collect information on the RingCentral instance, useful for conducting audits and health checks on RingCentral instances."
-__core_version__ = "0.7"
+__core_version__ = "0.8"
 __github__ = "https://github.com/Ripped-Kanga/RingCentral-Scripts\n"
 __disclaimer__ = "The purpose of this project is to provide easy auditability to the RingCentral platform. All the API calls made in this project are GET requests and represent no danger to the RingCentral data. To exit the script at any time, use CTRL + C. All data collected by this tool is writen to CSV file, the file is stored in the /AuditResults folder."
 
@@ -211,6 +211,122 @@ def audit_checker (audit_url):
 				built_url = f'/restapi/v2/accounts/~/phone-numbers?perPage={totalElements}'
 				filtered_phone_number_count = False
 				return (filtered_phone_number_count, totalElements, built_url)
-
+	
 	except Exception as e:
 		sys.exit(f'Error occured: '+ str(e))
+
+# Set what dict keys to export to csv
+def prep_user_csv():
+	# Initialise field variables to False
+	(
+		csv_field_id,
+		csv_field_name,
+		csv_field_number,
+		csv_field_status,
+		csv_field_site,
+		csv_field_company,
+		csv_field_department,
+		csv_field_job_title,
+		csv_field_email,
+		csv_field_admin_check,
+		csv_field_user_assigned_role,
+		csv_field_setup_wizard_status,
+		csv_field_dnd_state,
+		csv_field_bhr_fw,
+		csv_field_device_info
+	) = [False] * 15
+
+	# Load pick menu, multi-select returns Tuple
+	title = 'Select what fields you want to export to csv file. (Multiple Selections Allowed, <Default All> includes all fields.)'
+	field_options = [
+	'Default All',
+	'ID',
+	'Name',
+	'Number',
+	'Status',
+	'Site',
+	'Company',
+	'Department',
+	'Job Title',
+	'Email',
+	'Administrator Check?',
+	'User Assigned Role',
+	'Setup Wizard Status',
+	'DND State',
+	'Business Hours Rule Forwarding',
+	'Device Information'
+	]
+	options = pick(field_options, title, multiselect=True, min_selection_count=1, indicator='\u25BA\u25BA')
+	for option, _ in options:
+		o = option.strip()
+		print(f"Checking option: '{o}'")
+		if o == 'Default All':
+			(
+			csv_field_id,
+			csv_field_name,
+			csv_field_number,
+			csv_field_status,
+			csv_field_site,
+			csv_field_company,
+			csv_field_department,
+			csv_field_job_title,
+			csv_field_email,
+			csv_field_admin_check,
+			csv_field_user_assigned_role,
+			csv_field_setup_wizard_status,
+			csv_field_dnd_state,
+			csv_field_bhr_fw,
+			csv_field_device_info
+			) = [True] * 15
+		elif o == 'ID':
+				csv_field_id = True
+		elif o == 'Name':
+				csv_field_name = True
+		elif o == 'Number':
+				csv_field_number = True
+		elif o == 'Status':
+				csv_field_status = True
+		elif o == 'Site':
+				csv_field_site = True
+		elif o == 'Company':
+				csv_field_company = True
+		elif o == 'Department':
+				csv_field_department = True
+		elif o == 'Job Title':
+				csv_field_job_title = True
+		elif o == 'Email':
+				csv_field_email = True
+		elif o == 'Administrator Check?':
+				csv_field_admin_check = True
+		elif o == 'User Assigned Role':
+				csv_field_user_assigned_role = True
+		elif o == 'Setup Wizard Status':
+				csv_field_setup_wizard_status = True
+		elif o == 'DND State':
+				csv_field_dnd_state = True
+		elif o == 'Business Hours Rule Forwarding':
+				csv_field_bhr_fw = True
+		elif o == 'Device Information':
+				csv_field_device_info = True
+		else:
+				sys.exit(f"Unrecognized option: '{o}'")
+
+	csv_fields = (
+		csv_field_id,
+		csv_field_name,
+		csv_field_number,
+		csv_field_status,
+		csv_field_site,
+		csv_field_company,
+		csv_field_department,
+		csv_field_job_title,
+		csv_field_email,
+		csv_field_admin_check,
+		csv_field_user_assigned_role,
+		csv_field_setup_wizard_status,
+		csv_field_dnd_state,
+		csv_field_bhr_fw,
+		csv_field_device_info
+		)
+
+	return (csv_fields)
