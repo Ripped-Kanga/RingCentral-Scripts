@@ -33,10 +33,11 @@ Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 # Implementation Tracking
 ## General
 - [x] Implement rate limit checking and prevention.
-- [ ] Improve API error handling.
+- [X] Improve API error handling.
 - [x] Added filter options for initial API call to:
 	- [x] UserAudit.py
 	- [ ] CallQueueAudit.py
+	- [x] PhoneNumberAudit.py
 
 ## CallQueueAudit.py
 - [x] Redo script logic to better acommodate API limits and better error checking.
@@ -50,16 +51,16 @@ Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 ## UserAudit.py
 - [x] Build initial version, test and debug.
 - [x] Write audit data to csv
+- [x] Selectable fields for CSV file. (Currently occurs after running a full audit on a user, inefficient, will be replaced with dynamic API requests based off what is required in csv export.)
 - [ ] Store User IDs in json for later use.
 - [x] Write IDs to csv file column one.
-- [ ] Add catch for running unfilted params, skip unassigned extensions so as to not crash the script. 
+- [ ] Add catch for running unfiltered params, skip unassigned extensions so as to not crash the script. 
 
 - [ ] Should pull the following:
 	### User Information
 	- [x] First & Last Name
 	- [x] Extension Number
 	- [x] Email
-	- [ ] Contact Number
 	- [x] Departments
 	- [x] Permissions (is administrator?)
 	- [x] User Assigned Role
@@ -74,7 +75,7 @@ Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 	- [x] Device Serial
 	- [x] Device Status
 
-## PhoneNumberAuditpy
+## PhoneNumberAudit.py
 - [x] Build initial version, test and debug.
 - [x] Write audit data to csv
 - [x] Implement basic filter parameters. 
