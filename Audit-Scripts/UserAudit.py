@@ -62,24 +62,58 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 	resp = connectRequest(built_url)
 	for record in resp.json().records:
 		user_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}')
-		device_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/device')
-		user_role_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/assigned-role')
-		user_presence_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/presence')
-		user_forwarding_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/answering-rule/business-hours-rule')
 		user_data = json.loads(user_resp.text())
-		device_data = json.loads(device_resp.text())
-		user_presence_data = json.loads(user_presence_resp.text())
-		user_forwarding_data = json.loads(user_forwarding_resp.text())
-		device_records = device_data['records']
-		user_roles_list = user_role_resp.json().records
 
-		# Set Variables for dict build.
 		# Check if user has role assigned, set variable.
-		if user_roles_list:
-			for roles in user_roles_list:
-				ext_assigned_role = roles.displayName
-		else:
-			ext_assigned_role = ""
+		if csv_field_user_assigned_role:
+			user_role_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/assigned-role')
+			user_roles_list = user_role_resp.json().records
+			if user_roles_list:
+				for roles in user_roles_list:
+					ext_assigned_role = roles.displayName
+			else:
+				ext_assigned_role = "DEBUG"
+
+		# If user selected dnd_state field for csv export, retrieve info from API and set variables.
+		if csv_field_dnd_state:
+			user_presence_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/presence')
+			user_presence_data = json.loads(user_presence_resp.text())
+			ext_dnd_status = user_presence_data.get('dndStatus')
+
+		# If user selected Business Hours Forward Destination field for csv export, retireve info from API and set variables.
+		if csv_field_bhr_fw:
+			user_forwarding_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/answering-rule/business-hours-rule')
+			user_forwarding_data = json.loads(user_forwarding_resp.text())
+			bhr_missed_call_forward = user_forwarding_data.get('missedCall')
+			bhr_voicemail = user_forwarding_data.get('voicemail', {}).get('enabled')
+
+			# Check if extension has business hours rule call forward or voicemail, set variables.
+			if bhr_voicemail == True:
+				ext_bhr_fw_dest = 'User Voicemail'
+			elif bhr_missed_call_forward:
+				# check if it is an internal or external forward
+				dest_type = user_forwarding_data.get('missedCall', {}).get('actionType')
+				if dest_type == 'ConnectToExtension':
+					ext_bhr_int_fw_id = user_forwarding_data.get('missedCall', {}).get('extension', {}).get('id')
+					check_fw_destination_int_name = connectRequest(f'/restapi/v1.0/account/~/extension/{ext_bhr_int_fw_id}')
+					fw_destination_int_name_data = json.loads(check_fw_destination_int_name.text())
+					ext_bhr_fw_dest = fw_destination_int_name_data.get('name')
+				elif dest_type == 'ConnectToExternalNumber':
+					ext_bhr_fw_dest = user_forwarding_data.get('missedCall', {}).get('externalNumber', {}).get('phoneNumber')
+			else:
+				ext_bhr_fw_dest = "DEBUG"
+
+		# If user selected device field for csv export, retrieve info from API and set variables.
+		if csv_field_device_info:
+			device_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/device')
+			device_data = json.loads(device_resp.text())
+			device_records = device_data['records']
+			if device_records:
+				for device in device_records:
+					ext_device_name = device.get('name')
+					ext_device_model = device.get('model', {}).get('name')
+					ext_device_serial = device.get('serial')
+					ext_device_status = device.get('status')
 
 		ext_id = record.id
 		ext_name = record.name
@@ -92,50 +126,28 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 		ext_email = user_data.get('contact', {}).get('email')
 		ext_is_admin = user_data.get('permissions', {}).get('admin', {}).get('enabled')
 		ext_setup_wizard = user_data.get('setupWizardState')
-		ext_dnd_status = user_presence_data.get('dndStatus')
-
-		# Check if extension has business hours rule call forward or voicemail, set variables.
-		bhr_missed_call_forward = user_forwarding_data.get('missedCall')
-		bhr_voicemail = user_forwarding_data.get('voicemail', {}).get('enabled')
-
-		if bhr_voicemail == True:
-			ext_bhr_fw_dest = 'User Voicemail'
-		elif bhr_missed_call_forward:
-			# check if it is an internal or external forward
-			dest_type = user_forwarding_data.get('missedCall', {}).get('actionType')
-			if dest_type == 'ConnectToExtension':
-				ext_bhr_int_fw_id = user_forwarding_data.get('missedCall', {}).get('extension', {}).get('id')
-				check_fw_destination_int_name = connectRequest(f'/restapi/v1.0/account/~/extension/{ext_bhr_int_fw_id}')
-				fw_destination_int_name_data = json.loads(check_fw_destination_int_name.text())
-				ext_bhr_fw_dest = fw_destination_int_name_data.get('name')
-			elif dest_type == 'ConnectToExternalNumber':
-				ext_bhr_fw_dest = user_forwarding_data.get('missedCall', {}).get('externalNumber', {}).get('phoneNumber')
-		else:
-			ext_bhr_fw_dest = ""
-
-		# Store user and device audit data, if the user has a device, store the device values, otherwise store blank device values.
-		if device_records:
-			for device in device_records:
-				row = {
-					**({"User ID": ext_id} if csv_field_id else {}),
-					**({"Extension Name": ext_name} if csv_field_name else {}),
-					**({"Extension Number": ext_number} if csv_field_number else {}),
-					**({"Extension Status":	ext_status} if csv_field_status else {}),
-					**({"Site": ext_site} if csv_field_site else {}),
-					**({"Company": ext_company} if csv_field_company else {}),
-					**({"Department": ext_department} if csv_field_department else {}),
-					**({"Job Title": ext_job_title} if csv_field_job_title else {}),
-					**({"Email": ext_email} if csv_field_email else {}),
-					**({"DND Status": ext_dnd_status} if csv_field_dnd_state else {}),
-					**({"Business Hours Forward Destination": ext_bhr_fw_dest} if csv_field_bhr_fw else {}),
-					**({"User Assigned Role": ext_assigned_role} if csv_field_user_assigned_role else {}),
-					**({"Setup Wizard State": ext_setup_wizard} if csv_field_setup_wizard_status else {}),
-					**({"Device Name": device.get('name')} if csv_field_device_info else {}),
-					**({"Device Model":	device.get('model', {}).get('name')} if csv_field_device_info else {}),
-					**({"Device Serial": device.get('serial')} if csv_field_device_info else {}),
-					**({"Device Status": device.get('status')} if csv_field_device_info else {})
-				}
-				datalist.append(row)
+		
+		# Store user and device audit data
+		row = {
+			**({"User ID": ext_id} if csv_field_id else {}),
+			**({"Extension Name": ext_name} if csv_field_name else {}),
+			**({"Extension Number": ext_number} if csv_field_number else {}),
+			**({"Extension Status":	ext_status} if csv_field_status else {}),
+			**({"Site": ext_site} if csv_field_site else {}),
+			**({"Company": ext_company} if csv_field_company else {}),
+			**({"Department": ext_department} if csv_field_department else {}),
+			**({"Job Title": ext_job_title} if csv_field_job_title else {}),
+			**({"Email": ext_email} if csv_field_email else {}),
+			**({"DND Status": ext_dnd_status} if csv_field_dnd_state else {}),
+			**({"Business Hours Forward Destination": ext_bhr_fw_dest} if csv_field_bhr_fw else {}),
+			**({"User Assigned Role": ext_assigned_role} if csv_field_user_assigned_role else {}),
+			**({"Setup Wizard State": ext_setup_wizard} if csv_field_setup_wizard_status else {}),
+			**({"Device Name": ext_device_name} if csv_field_device_info else {}),
+			**({"Device Model":	ext_device_model} if csv_field_device_info else {}),
+			**({"Device Serial": ext_device_serial} if csv_field_device_info else {}),
+			**({"Device Status": ext_device_status} if csv_field_device_info else {})
+		}
+		datalist.append(row)
 		
 		# Global variable so that user_main() can report the total audited users.
 		global user_audit
