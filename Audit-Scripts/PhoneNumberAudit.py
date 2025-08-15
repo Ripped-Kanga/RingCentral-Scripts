@@ -1,4 +1,5 @@
 #!/usr/bin/python
+__version__ = "0.2"
 
 # Import libraries
 import os
