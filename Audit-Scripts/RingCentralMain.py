@@ -15,10 +15,9 @@ import datetime
 import csv
 import textwrap
 from dotenv import load_dotenv
-#from ringcentral.http.api_exception import ApiException
-from ringcentral import SDK#, http
+from ringcentral import SDK
 import inspect #Used for tracing stack
-from pick import pick
+from pick import pick #Pick Menu
 load_dotenv()
 
 # Global Variables
@@ -110,13 +109,14 @@ def audit_checker (audit_url):
 			print (f'Found {totalElements} Users:\n')
 			
 			while True:
-				ask_audit = str(input("Do you want to customise the conditions of the audit?(y/n: "))
+				ask_audit = str(input("Do you want to customise the API Filter Parameters?(y/n: "))
 				if ask_audit in ['y', 'n']:
 					break
 				print("Invalid input. Please enter 'y' or 'n'.")
 
 			if ask_audit == "y":
-				print("Customised audit selected.")
+				print("API Filter Parameter custimisation selected...")
+				time.sleep(3)
 				# Load pick menu
 				title = 'Select a query option below: (You can only choose one!)'
 				query_options = ['extensionNumber', 'email', 'status']
@@ -154,7 +154,7 @@ def audit_checker (audit_url):
 					print ("No results returned from filter paramaters. Please review your filter paramaters and try again.")
 
 			elif ask_audit == "n":
-				print("No customisation will apply to the user audit, proceeding.")
+				print("No customisation to the API Filter Parameters selected, proceeding...")
 				built_url = str(f'/restapi/v1.0/account/~/extension?perPage={totalElements}&type=User')
 				filter_user_count = False
 				return (filter_user_count, totalElements, built_url)
@@ -179,7 +179,7 @@ def audit_checker (audit_url):
 			print (f'Found {totalElements} Phone Numbers:\n')
 			
 			while True:
-				ask_audit = str(input("Do you want to customise the conditions of the audit?(y/n: "))
+				ask_audit = str(input("Do you want to customise the API Filter Parameters?(y/n: "))
 				if ask_audit in ['y', 'n']:
 					break
 				print("Invalid input. Please enter 'y' or 'n'.")
@@ -207,7 +207,7 @@ def audit_checker (audit_url):
 				return (filtered_phone_number_count, totalElements, filtered_phone_number_built_url)
 
 			elif ask_audit == 'n':
-				print ("Proceeding with full Phone Number audit...")
+				print ("No customisation to the API Filter Parameters selected, proceeding...")
 				built_url = f'/restapi/v2/accounts/~/phone-numbers?perPage={totalElements}'
 				filtered_phone_number_count = False
 				return (filtered_phone_number_count, totalElements, built_url)
@@ -215,7 +215,7 @@ def audit_checker (audit_url):
 	except Exception as e:
 		sys.exit(f'Error occured: '+ str(e))
 
-# Set what dict keys to export to csv
+# Set what dict keys to export to csv for UserAudit.py
 def prep_user_csv():
 	# Initialise field variables to False
 	(
@@ -235,9 +235,12 @@ def prep_user_csv():
 		csv_field_bhr_fw,
 		csv_field_device_info
 	) = [False] * 15
-
+	field_advisory_info = "The next window will ask you to select which fields you want to export to CSV. Selecting more fields will increase the time taken to audit each users, as well as increase the chance of hitting API rate limiting. If rate limiting occurs, the script will pause for 60 seconds to allow the limit to reset."
+	wrapped_field_info = textwrap.fill(field_advisory_info, width=80)
+	print(wrapped_field_info)
+	input("Press any key to proceed")
 	# Load pick menu, multi-select returns Tuple
-	title = 'Select what fields you want to export to csv file. (Multiple Selections Allowed, <Default All> includes all fields.)'
+	title = 'Select (SPACE) what fields you want to export to csv file. (Multiple Selections Allowed, <Default All> includes all fields.) Press ENTER to continue:'
 	field_options = [
 	'Default All',
 	'ID',
