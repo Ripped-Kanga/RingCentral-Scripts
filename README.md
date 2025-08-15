@@ -44,7 +44,7 @@ Invoke the script you wish to run, below example has used `CallQueueAudit.py`
 - [x] Write audit data to csv
 - [x] Selectable fields for CSV file export, does not consume API calls for unelected fields.
 - [ ] Store User IDs in json for later use.
-- [ ] Add catch for running unfiltered params, skip unassigned extensions so as to not crash the script. 
+- [X] Add catch for running unfiltered params, skip unassigned extensions so as to not crash the script. 
 
 - [x] Audits the following:
 	### User Information
