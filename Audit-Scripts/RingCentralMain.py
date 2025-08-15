@@ -2,7 +2,7 @@
 
 __author__ = "Alan Saunders"
 __purpose__ = "Uses the RingCentral API to collect information on the RingCentral instance, useful for conducting audits and health checks on RingCentral instances."
-__core_version__ = "0.8"
+__core_version__ = "0.92"
 __github__ = "https://github.com/Ripped-Kanga/RingCentral-Scripts\n"
 __disclaimer__ = "The purpose of this project is to provide easy auditability to the RingCentral platform. All the API calls made in this project are GET requests and represent no danger to the RingCentral data. To exit the script at any time, use CTRL + C. All data collected by this tool is writen to CSV file, the file is stored in the /AuditResults folder."
 
@@ -34,7 +34,7 @@ def housekeeping():
 	wrapped_disclaimer = textwrap.fill(__disclaimer__, width=80)
 	wrapped_purpose = textwrap.fill(__purpose__, width=80)
 	print(
-		f"Author: {__author__}",
+		f"Author:	{__author__}",
 		f"Purpose: {wrapped_purpose}",
 		f"Version: {__core_version__}",
 		f"Github Link: {__github__}",
@@ -44,7 +44,7 @@ def housekeeping():
 	print()
 	
 
-# Perform requests while staying below API limit.
+# Perform requests while staying below API limit. Catch API errors and print error response body.
 def connectRequest(url):
 	while True:
 		try:
@@ -55,6 +55,7 @@ def connectRequest(url):
 			api_limit = int(headers["X-Rate-Limit-Limit"])
 			api_limit_remaining = int(headers["X-Rate-Limit-Remaining"])
 			api_limit_window = int(headers["X-Rate-Limit-Window"])
+			# Check API limit on each request, if API limit hits 0, sleep the script for the time reported by API Limit Window.
 			if api_limit_remaining == 0:
 				retry_after = api_limit_window
 				print(f'Rate limit has been hit, waiting for {retry_after} seconds, the script will automatically resume.')
@@ -66,36 +67,59 @@ def connectRequest(url):
 		except Exception as e:
 			print (f'Error during API request: Error \u25BA\u25BA {e}')
 
-# Performs a connection test to the RingCentral API and returns True if the response is HTTP 200, also retrieves and prints the company info.
+# Performs a connection test to the RingCentral API and returns True if the response is HTTP 200, also retrieves and prints the company info to console.
 def connection_test():
-	connect_test_url = connectRequest('/restapi/v2/accounts/~')
-	resp_rc_serviceplan = connectRequest('/restapi/v1.0/account/~/service-info')
+	try:
+		connect_test_url = connectRequest('/restapi/v2/accounts/~')
+		resp_rc_serviceplan = connectRequest('/restapi/v1.0/account/~/service-info')
 
-	if connect_test_url.response().status_code == 200:
-		print(f'Connection returned 200 OK, displaying company information.\n')
-		print (f'#'*27, '\n### Company Information ###\n','#'*27, sep="")
+		if connect_test_url.response().status_code == 200:
+			print(f'Connection returned 200 OK, displaying company information.\n')
+			print (f'#'*27, '\n### Company Information ###\n','#'*27, sep="")
+			
+			# Retrieve company info, service plan, billing
+			company_info = json.loads(connect_test_url.text())
+			rc_serviceplan_info = json.loads(resp_rc_serviceplan.text())
+			# Company info
+			company_status = company_info.get('status')
+			company_name = company_info.get('companyName')
+			company_number = company_info.get('mainNumber')
+			company_address_street = company_info.get('companyAddress', {}).get('street')
+			company_address_city = company_info.get('companyAddress', {}).get('city')
+			company_address_state = company_info.get('companyAddress', {}).get('state')
+			company_address_zip = company_info.get('companyAddress', {}).get('zip')
+			company_address_country = company_info.get('companyAddress', {}).get('country')
+			# Billing info
+			rc_plan_type = rc_serviceplan_info.get('servicePlan', {}).get('name')
+			rc_billing_schedule = rc_serviceplan_info.get('billingPlan', {}).get('durationUnit')
+			
+			# Print the company information to console
+			print (
+				f'Company Name - {company_name}',
+				f'Company Status - {company_status}',
+				f'Company Number - {company_number}',
+				f'Company Address - {company_address_street}, {company_address_city}, {company_address_state}, {company_address_zip}, {company_address_country}\n',
+				sep='\n'
+				)
+			print (f'#'*29, '\n### Plan and Billing Info ###\n','#'*29, sep="")
+			print (
+				f'RingCentral Plan: {rc_plan_type}',
+				f'Billing Schedule: {rc_billing_schedule}\n',
+				sep='\n'
+				)
+
+			# Asks the user to confirm the displayed company info is correct, to ensure users don't run the audit on the wrong account. 
+			while True:
+				confirmation = input("Please confirm the company information displayed above is correct: (y/n)")
+				if confirmation in ['y', 'n']:
+					if confirmation == 'y':
+						return True
+					else:
+						sys.exit ("User selected No for company confirmation. Please check your JWT and client app information provided in .env")
+				print ("Please enter 'y' or 'n'.")
 		
-		# Retrieve company info, service plan, billing
-		company_info = json.loads(connect_test_url.text())
-		rc_serviceplan_info = json.loads(resp_rc_serviceplan.text())
-		rc_plan_type = rc_serviceplan_info.get('servicePlan', {}).get('name')
-		rc_billing = rc_serviceplan_info.get('billingPlan', {}).get('durationUnit')
-		
-		# Print the company information to console
-		print (f'Company Name - {company_info.get('companyName')}\nCompany Number - {company_info.get('mainNumber')}\n')
-		print (f'#'*29, '\n### Plan and Billing Info ###\n','#'*29, sep="")
-		print (f'RingCentral Plan: {rc_plan_type}\nBilling Schedule: {rc_billing}\n')
-		while True:
-			confirmation = input("Please confirm the company information displayed above is correct: (y/n)")
-			if confirmation in ['y', 'n']:
-				if confirmation == 'y':
-					return True
-				else:
-					sys.exit ("User selected No for company confirmation. Please check your JWT and client app information provided in .env")
-			print ("Please enter 'y' or 'n'.")
-		
-	else:
-		sys.exit("API did not respond with 200 OK, please check your .env variables and credentails.")
+	except Exception as e:
+		print (f'Error during API request: Error \u25BA\u25BA {e}')
 
 
 def audit_checker (audit_url):
@@ -115,7 +139,7 @@ def audit_checker (audit_url):
 				print("Invalid input. Please enter 'y' or 'n'.")
 
 			if ask_audit == "y":
-				print("API Filter Parameter custimisation selected...")
+				print("API Filter Parameter custimisation selected...\n")
 				time.sleep(3)
 				# Load pick menu
 				title = 'Select a query option below: (You can only choose one!)'
@@ -139,7 +163,7 @@ def audit_checker (audit_url):
 								query_status = str(input("Enter the User Status (Enabled, Disabled, NotActivated, Unassigned: "))
 								if query_status in ['Enabled', 'Disabled', 'NotActivated', 'Unassigned']:
 									break
-								print ("Invalid input, please review the options and try again.")
+								print ("Invalid input, please review the options and try again.\n")
 							query_option = str(f'{option}='+query_status)
 						case _:
 							sys.exit("An error occured in the pick list.")
@@ -149,12 +173,12 @@ def audit_checker (audit_url):
 					filter_user_built_url = str(f'/restapi/v1.0/account/~/extension?perPage={filter_user_count}&type=User&{query_option}')
 					
 					if filter_user_count:
-						print (f'Found {filter_user_count} users with current filter parameters, starting audit.')
+						print (f'Found {filter_user_count} users with current filter parameters, proceeding to field customisation.\n')
 						return (filter_user_count, totalElements, filter_user_built_url) 
-					print ("No results returned from filter paramaters. Please review your filter paramaters and try again.")
+					print ("No results returned from filter paramaters. Please review your filter paramaters and try again.\n")
 
 			elif ask_audit == "n":
-				print("No customisation to the API Filter Parameters selected, proceeding...")
+				print("No customisation to the API Filter Parameters selected, proceeding...\n")
 				built_url = str(f'/restapi/v1.0/account/~/extension?perPage={totalElements}&type=User')
 				filter_user_count = False
 				return (filter_user_count, totalElements, built_url)
@@ -238,7 +262,7 @@ def prep_user_csv():
 	field_advisory_info = "The next window will ask you to select which fields you want to export to CSV. Selecting more fields will increase the time taken to audit each users, as well as increase the chance of hitting API rate limiting. If rate limiting occurs, the script will pause for 60 seconds to allow the limit to reset."
 	wrapped_field_info = textwrap.fill(field_advisory_info, width=80)
 	print(wrapped_field_info)
-	input("Press any key to proceed")
+	input("Press ENTER key to proceed")
 	# Load pick menu, multi-select returns Tuple
 	title = 'Select (SPACE) what fields you want to export to csv file. (Multiple Selections Allowed, <Default All> includes all fields.) Press ENTER to continue:'
 	field_options = [
