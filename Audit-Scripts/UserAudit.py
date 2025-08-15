@@ -1,4 +1,5 @@
 #!/usr/bin/python
+__version__ = "0.9"
 
 # Import libraries
 import os
@@ -59,7 +60,9 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 		csv_field_bhr_fw,
 		csv_field_device_info
 	) = prep_user_csv()
+
 	resp = connectRequest(built_url)
+	# Loop through returned records and extract User IDs to build GET Extension URI.
 	for record in resp.json().records:
 		user_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}')
 		user_data = json.loads(user_resp.text())
@@ -115,10 +118,11 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 					ext_device_serial = device.get('serial')
 					ext_device_status = device.get('status')
 
+		# Set User API variables.
 		ext_id = record.id
-		ext_name = record.name
-		ext_number = record.extensionNumber
-		ext_status = record.status
+		ext_name = user_data.get('name')
+		ext_number = user_data.get('extensionNumber')
+		ext_status = user_data.get('status')
 		ext_site = user_data.get('site', {}).get('name')
 		ext_company = user_data.get('contact', {}).get('company')
 		ext_department = user_data.get('contact', {}).get('department')
@@ -141,6 +145,7 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 			**({"DND Status": ext_dnd_status} if csv_field_dnd_state else {}),
 			**({"Business Hours Forward Destination": ext_bhr_fw_dest} if csv_field_bhr_fw else {}),
 			**({"User Assigned Role": ext_assigned_role} if csv_field_user_assigned_role else {}),
+			**({"Is administrator?": ext_is_admin} if csv_field_admin_check else {}),
 			**({"Setup Wizard State": ext_setup_wizard} if csv_field_setup_wizard_status else {}),
 			**({"Device Name": ext_device_name} if csv_field_device_info else {}),
 			**({"Device Model":	ext_device_model} if csv_field_device_info else {}),
@@ -149,7 +154,7 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 		}
 		datalist.append(row)
 		
-		# Global variable so that user_main() can report the total audited users.
+		# Global variable user_audit so that user_main() can report the total audited users.
 		global user_audit
 		user_audit += 1
 		if filter_user_count:
