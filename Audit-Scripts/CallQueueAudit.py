@@ -103,27 +103,25 @@ def get_ringcentral_callqueue_members(call_queue_id,cq_name,cq_extension):
 				cq_member_accept_current_queue_calls = ''
 				cq_member_accept_calls = ''
 
-			print(f'\u2192 Name: {cq_member} - Member Extension: {cq_member_ext} - Accept Current Queue Calls: {cq_member_accept_current_queue_calls} - Accept Queue Calls: {cq_member_accept_calls}')
+			#print(f'\u2192 Name: {cq_member} - Member Extension: {cq_member_ext} - Accept Current Queue Calls: {cq_member_accept_current_queue_calls} - Accept Queue Calls: {cq_member_accept_calls}')
 			build_datalist(cq_name,cq_extension,cq_member,cq_member_ext,cq_member_accept_calls, cq_member_accept_current_queue_calls)
 		
-		# If no members found in any call queues, build list retrieving call queue details but populate 'No Members'
-		#if not call_queue_members['records']:
-			
-			#build_datalist(cq_name,cq_extension,cq_member,cq_member_ext,cq_member_accept_calls, cq_member_accept_current_queue_calls)
 	except Exception as e:
 		sys.exit("error occured: " + str(e))
 
 # Uses the collected call queue information to build a dictionary.
 def build_datalist(cq_name,cq_extension,cq_member,cq_member_ext, cq_member_accept_calls, cq_member_accept_current_queue_calls):
 
-	call_queue_datalist.append({
+	row = {
 		"Call Queue Name":      				cq_name,
 		"Call Queue Extension": 				cq_extension,
 		"Call Queue Member":    				cq_member,
 		"Member Extension":     				cq_member_ext,
 		"Accept Queue Calls?":					cq_member_accept_calls,
 		"Accept Current Queue Calls?":	cq_member_accept_current_queue_calls
-	})
+	}
+	pprint.pprint(row, indent=4, sort_dicts=False)
+	call_queue_datalist.append(row)
 	build_csv(call_queue_datalist)
 
 # Builds the csv file, sets headers. 
