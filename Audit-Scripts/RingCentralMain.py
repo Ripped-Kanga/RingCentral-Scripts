@@ -2,7 +2,7 @@
 
 __author__ = "Alan Saunders"
 __purpose__ = "Uses the RingCentral API to collect information on the RingCentral instance, useful for conducting audits and health checks on RingCentral instances."
-__core_version__ = "0.92"
+__core_version__ = "0.95 - alpha 2"
 __github__ = "https://github.com/Ripped-Kanga/RingCentral-Scripts\n"
 __disclaimer__ = "The purpose of this project is to provide easy auditability to the RingCentral platform. All the API calls made in this project are GET requests and represent no danger to the RingCentral data. To exit the script at any time, use CTRL + C. All data collected by this tool is writen to CSV file, the file is stored in the /AuditResults folder."
 
