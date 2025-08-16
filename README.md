@@ -15,6 +15,9 @@ All audit results are exported to csv file stored in AuditResults folder.
 ## Python3 
 Download the latest Python3 binary and install it.
 
+# Download & Execution
+Clone the repo into a directory and open your terminal in the RingCentral-Scripts folder.
+
 ## Setup Python Virtual Environment (Optional)
 ### Linux & Mac
 `python3 -m venv /path/to/new/virtual/environment`.
@@ -32,23 +35,16 @@ From terminal, run: (If you are going to use a Python Virtual Environment, do th
 # Populate .env
 You get the environment parameters from your
 application dashbord in your developer account
-https://developers.ringcentral.com
+https://developers.ringcentral.com/my-account.html#/applications
 
-You will need to register an app and choose JWT for your credentials. Your app will need `Read Users` & `Read Presense` permissions.
+You will need to register an app and choose JWT Auth Flow as your Auth method. Your app will need `Read Accounts` & `Read Presence` permissions.
 Copy your APP Client ID, App Client Secret, and JWT Credential Secret into your .env file.
+https://developers.ringcentral.com/console/my-credentials
+
 Refer to the .env_template for an example.
 
-# Download & Execution
-Clone the repo into a directory and open your terminal in the RingCentral-Scripts folder.
 
-## Setup Python Virtual Environment (Optional)
-### Linux & Mac
-`python3 -m venv /path/to/new/virtual/environment`.
-To activate, run `source /path/to/new/virtual/environment/bin/activate`
-### Windows
-`python -m venv /path/to/new/virtual/environment`
-to activate, run `venv\Scripts\activate`
-
+# Execution
 Run the script you wish to run, below example has used `UserAudit.py`
 ## Linux & Mac
 `python3 Audit-Scripts/UserAudit.py`
