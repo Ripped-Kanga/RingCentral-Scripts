@@ -28,9 +28,9 @@ to activate, run `venv\Scripts\activate`
 
 ### Required Libraries
 From terminal, run: (If you are going to use a Python Virtual Environment, do this after activating the environment)
-	- `pip install ringcentral`
-	- `pip install dotenv`
-	- `pip install pick` 
+- `pip install ringcentral`
+- `pip install dotenv`
+- `pip install pick`
 
 # Populate .env
 You get the environment parameters from your
