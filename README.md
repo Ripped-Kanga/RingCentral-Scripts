@@ -20,13 +20,17 @@ Clone the repo into a directory and open your terminal in the RingCentral-Script
 
 ## Setup Python Virtual Environment (Optional) (Recommended)
 ### Linux & Mac
-*Example*
+*Example*:
+
 To create virtual environment - `python3 -m venv venv`.
-To **activate**, run - `source venv/bin/acivate`
+
+To **activate**, run - `source venv/bin/acivate`.
 ### Windows
-*Example*
-To create virtual environment - `python -m venv venv`
-To **activate**, run - `venv\Scripts\activate`
+*Example*:
+
+To create virtual environment - `python -m venv venv`.
+
+To **activate**, run - `venv\Scripts\activate`.
 
 ### Required Libraries
 From terminal, run: (If you are going to use a Python Virtual Environment, do this after activating the environment)
