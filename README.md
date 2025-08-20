@@ -96,12 +96,20 @@ Run the script you wish to run, below example has used `UserAudit.py`
 
 # Implementation Tracking (v0.95-alpha2)
 ## General
+### Error Handling
 - [x] Implemented first try at catching http codes in API exception stack.
+	- [x] 404 Code Catch, treat as missing value and skip over.
+	- [x] 400 Code does not return status_code, so extract API error from exception body and catch that way. Currently catching "HTTP Error 400, AWR-193 Answering Rule not supported"
+	- [x] Any 500 Code, simply sleep the script and try again.
+### Logging
+- [x] Added first implementation of logging. Output is to .log file and console. Logging is enabled by setting DEBUG=1 in .env file. 
 
 ## UserAudit.py
 - [x] Fixed VideoPro accounts crashing script due to no device record existing.
 - [x] Added csv_field_type, csv_field_subType, csv_field_ahr to export options. 
 - [x] Added After Hours Rule data
+- [x] Added full API filtering control before csv field selection. Return full extension count and then post filter extension count. If no extensions are returned from the new filter parameters, ask user to try again. 
+	- [ ] Move this into a new subfunction for cleaner code and allow users to chain parameters together (?type=User&status=Disabled)
 
 ## CallQueueAudit.py
 
