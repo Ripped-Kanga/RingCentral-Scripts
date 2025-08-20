@@ -96,10 +96,12 @@ Run the script you wish to run, below example has used `UserAudit.py`
 
 # Implementation Tracking (v0.95-alpha2)
 ## General
-
+- [x] Implemented first try at catching http codes in API exception stack.
 
 ## UserAudit.py
-
+- [x] Fixed VideoPro accounts crashing script due to no device record existing.
+- [x] Added csv_field_type, csv_field_subType, csv_field_ahr to export options. 
+- [x] Added After Hours Rule data
 
 ## CallQueueAudit.py
 
