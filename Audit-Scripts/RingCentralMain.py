@@ -21,6 +21,8 @@ from pick import pick #Pick Menu
 load_dotenv()
 
 # Global Variables
+DEBUG = False
+
 
 # RingCentral SDK
 rcsdk = SDK( os.environ.get('RC_APP_CLIENT_ID'),
@@ -61,11 +63,23 @@ def connectRequest(url):
 				print(f'Rate limit has been hit, waiting for {retry_after} seconds, the script will automatically resume.')
 				time.sleep(retry_after)
 				continue
-				
 			else:
 				return resp
+
 		except Exception as e:
-			print (f'Error during API request: Error \u25BA\u25BA {e}')
+			error_message = str(e)
+
+			if "HTTP 404" in error_message:
+				if DEBUG == True:
+					print(f'404 Not Found for URL: {url}')
+					return None
+				else:
+					return None
+					
+			else:
+				print(f'Unexpected API error for URL {url}:\n{error_message}')
+				return None
+
 
 # Performs a connection test to the RingCentral API and returns True if the response is HTTP 200, also retrieves and prints the company info to console.
 def connection_test():
@@ -247,6 +261,8 @@ def prep_user_csv():
 		csv_field_name,
 		csv_field_number,
 		csv_field_status,
+		csv_field_type,
+		csv_field_subType,
 		csv_field_site,
 		csv_field_company,
 		csv_field_department,
@@ -257,8 +273,9 @@ def prep_user_csv():
 		csv_field_setup_wizard_status,
 		csv_field_dnd_state,
 		csv_field_bhr_fw,
+		csv_field_ahr_fw,
 		csv_field_device_info
-	) = [False] * 15
+	) = [False] * 18
 	field_advisory_info = "The next window will ask you to select which fields you want to export to CSV. Selecting more fields will increase the time taken to audit each users, as well as increase the chance of hitting API rate limiting. If rate limiting occurs, the script will pause for 60 seconds to allow the limit to reset."
 	wrapped_field_info = textwrap.fill(field_advisory_info, width=80)
 	print(wrapped_field_info)
@@ -271,6 +288,8 @@ def prep_user_csv():
 	'Name',
 	'Number',
 	'Status',
+	'Type',
+	'Sub Type',
 	'Site',
 	'Company',
 	'Department',
@@ -281,6 +300,7 @@ def prep_user_csv():
 	'Setup Wizard Status',
 	'DND State',
 	'Business Hours Rule Forwarding',
+	'After Hours Rule Forwarding',
 	'Device Information'
 	]
 	options = pick(field_options, title, multiselect=True, min_selection_count=1, indicator='\u25BA\u25BA')
@@ -293,6 +313,8 @@ def prep_user_csv():
 			csv_field_name,
 			csv_field_number,
 			csv_field_status,
+			csv_field_type,
+			csv_field_subType,
 			csv_field_site,
 			csv_field_company,
 			csv_field_department,
@@ -303,8 +325,9 @@ def prep_user_csv():
 			csv_field_setup_wizard_status,
 			csv_field_dnd_state,
 			csv_field_bhr_fw,
+			csv_field_ahr_fw,
 			csv_field_device_info
-			) = [True] * 15
+			) = [True] * 18
 		elif o == 'ID':
 				csv_field_id = True
 		elif o == 'Name':
@@ -313,6 +336,10 @@ def prep_user_csv():
 				csv_field_number = True
 		elif o == 'Status':
 				csv_field_status = True
+		elif o == 'Type':
+				csv_field_type = True
+		elif o == 'Sub Type':
+				csv_field_subType = True
 		elif o == 'Site':
 				csv_field_site = True
 		elif o == 'Company':
@@ -333,6 +360,8 @@ def prep_user_csv():
 				csv_field_dnd_state = True
 		elif o == 'Business Hours Rule Forwarding':
 				csv_field_bhr_fw = True
+		elif o == 'After Hours Rule Forwarding':
+				csv_field_ahr_fw = True
 		elif o == 'Device Information':
 				csv_field_device_info = True
 		else:
@@ -343,6 +372,8 @@ def prep_user_csv():
 		csv_field_name,
 		csv_field_number,
 		csv_field_status,
+		csv_field_type,
+		csv_field_subType,
 		csv_field_site,
 		csv_field_company,
 		csv_field_department,
@@ -353,6 +384,7 @@ def prep_user_csv():
 		csv_field_setup_wizard_status,
 		csv_field_dnd_state,
 		csv_field_bhr_fw,
+		csv_field_ahr_fw,
 		csv_field_device_info
 		)
 
