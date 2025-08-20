@@ -1,5 +1,5 @@
 #!/usr/bin/python
-__version__ = "0.9"
+__version__ = "0.91"
 
 # Import libraries
 import os
@@ -48,6 +48,8 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 		csv_field_name,
 		csv_field_number,
 		csv_field_status,
+		csv_field_type,
+		csv_field_subType,
 		csv_field_site,
 		csv_field_company,
 		csv_field_department,
@@ -58,6 +60,7 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 		csv_field_setup_wizard_status,
 		csv_field_dnd_state,
 		csv_field_bhr_fw,
+		csv_field_ahr_fw,
 		csv_field_device_info
 	) = prep_user_csv()
 
@@ -85,26 +88,55 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 
 		# If user selected Business Hours Forward Destination field for csv export, retireve info from API and set variables.
 		if csv_field_bhr_fw:
-			user_forwarding_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/answering-rule/business-hours-rule')
-			user_forwarding_data = json.loads(user_forwarding_resp.text())
-			bhr_missed_call_forward = user_forwarding_data.get('missedCall')
-			bhr_voicemail = user_forwarding_data.get('voicemail', {}).get('enabled')
+			user_bh_forwarding_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/answering-rule/business-hours-rule')
+			user_bh_forwarding_data = json.loads(user_bh_forwarding_resp.text())
+			bhr_missed_call_forward = user_bh_forwarding_data.get('missedCall')
+			bhr_voicemail = user_bh_forwarding_data.get('voicemail', {}).get('enabled')
 
 			# Check if extension has business hours rule call forward or voicemail, set variables.
 			if bhr_voicemail == True:
 				ext_bhr_fw_dest = 'User Voicemail'
 			elif bhr_missed_call_forward:
 				# check if it is an internal or external forward
-				dest_type = user_forwarding_data.get('missedCall', {}).get('actionType')
+				dest_type = user_bh_forwarding_data.get('missedCall', {}).get('actionType')
 				if dest_type == 'ConnectToExtension':
-					ext_bhr_int_fw_id = user_forwarding_data.get('missedCall', {}).get('extension', {}).get('id')
+					ext_bhr_int_fw_id = user_bh_forwarding_data.get('missedCall', {}).get('extension', {}).get('id')
 					check_fw_destination_int_name = connectRequest(f'/restapi/v1.0/account/~/extension/{ext_bhr_int_fw_id}')
 					fw_destination_int_name_data = json.loads(check_fw_destination_int_name.text())
 					ext_bhr_fw_dest = fw_destination_int_name_data.get('name')
 				elif dest_type == 'ConnectToExternalNumber':
-					ext_bhr_fw_dest = user_forwarding_data.get('missedCall', {}).get('externalNumber', {}).get('phoneNumber')
+					ext_bhr_fw_dest = user_bh_forwarding_data.get('missedCall', {}).get('externalNumber', {}).get('phoneNumber')
 			else:
-				ext_bhr_fw_dest = "DEBUG"
+				ext_bhr_fw_dest = "No Business Hours Rule Exists"
+
+		# If user selected After Hours Forward Destination field for csv export, retrieve info from API and set variables.
+		if csv_field_ahr_fw:
+			user_ah_forwarding_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/answering-rule/after-hours-rule')
+
+			if user_ah_forwarding_resp != None:
+				user_ah_forwarding_data = json.loads(user_ah_forwarding_resp.text())
+				ahr_mode = user_ah_forwarding_data.get('callHandlingAction')
+				ahr_transfer_ext_id = user_ah_forwarding_data.get('transfer', {}).get('extension', {}).get('id')
+				ahr_voicemail = user_ah_forwarding_data.get('voicemail', {}).get('enabled')
+
+				# Check the forwarding mode switch.
+				if ahr_mode == "TakeMessagesOnly":
+					ext_ahr_fw_dest = "User Voicemail"
+				elif ahr_mode == "TransferToExtension":
+					ahr_transfer_ext_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{ahr_transfer_ext_id}')
+					ahr_transfer_ext_data = json.loads(ahr_transfer_ext_resp.text())
+					ext_ahr_fw_dest = ahr_transfer_ext_data.get('name')
+				elif ahr_mode == "UnconditionalForwarding":
+					ext_ahr_fw_dest = user_ah_forwarding_data.get('unconditionalForwarding', {}).get('phoneNumber')
+				elif ahr_mode == "PlayAnnouncementOnly":
+					ext_ahr_fw_dest = "Play Announcement Message"
+				elif ahr_mode == "ForwardCalls":
+					ext_ahr_fw_dest = "Ring Devices"
+				else:
+					ext_ahr_fw_dest = "DEBUG"
+			else:
+				ext_ahr_fw_dest = "No After Hours Rules"
+
 
 		# If user selected device field for csv export, retrieve info from API and set variables.
 		if csv_field_device_info:
@@ -117,12 +149,19 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 					ext_device_model = device.get('model', {}).get('name')
 					ext_device_serial = device.get('serial')
 					ext_device_status = device.get('status')
+			else:
+				ext_device_name = "No Device"
+				ext_device_model = "No Device"
+				ext_device_serial = "No Device"
+				ext_device_status = "No Device"
 
 		# Set User API variables.
 		ext_id = record.id
 		ext_name = user_data.get('name')
 		ext_number = user_data.get('extensionNumber')
 		ext_status = user_data.get('status')
+		ext_type = user_data.get('type')
+		ext_subType = user_data.get('subType')
 		ext_site = user_data.get('site', {}).get('name')
 		ext_company = user_data.get('contact', {}).get('company')
 		ext_department = user_data.get('contact', {}).get('department')
@@ -131,12 +170,15 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 		ext_is_admin = user_data.get('permissions', {}).get('admin', {}).get('enabled')
 		ext_setup_wizard = user_data.get('setupWizardState')
 		
+		
 		# Store user and device audit data
 		row = {
 			**({"User ID": ext_id} if csv_field_id else {}),
 			**({"Extension Name": ext_name} if csv_field_name else {}),
 			**({"Extension Number": ext_number} if csv_field_number else {}),
 			**({"Extension Status":	ext_status} if csv_field_status else {}),
+			**({"Extension Type":	ext_type} if csv_field_type else {}),
+			**({"Extension Sub Type":	ext_subType} if csv_field_subType else {}),
 			**({"Site": ext_site} if csv_field_site else {}),
 			**({"Company": ext_company} if csv_field_company else {}),
 			**({"Department": ext_department} if csv_field_department else {}),
@@ -144,6 +186,7 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 			**({"Email": ext_email} if csv_field_email else {}),
 			**({"DND Status": ext_dnd_status} if csv_field_dnd_state else {}),
 			**({"Business Hours Forward Destination": ext_bhr_fw_dest} if csv_field_bhr_fw else {}),
+			**({"After Hours Forward Destination": ext_ahr_fw_dest} if csv_field_ahr_fw else {}),
 			**({"User Assigned Role": ext_assigned_role} if csv_field_user_assigned_role else {}),
 			**({"Is administrator?": ext_is_admin} if csv_field_admin_check else {}),
 			**({"Setup Wizard State": ext_setup_wizard} if csv_field_setup_wizard_status else {}),
