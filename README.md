@@ -73,11 +73,14 @@ Run the script you wish to run, below example has used `UserAudit.py`
 - [x] Site
 - [x] DND Status
 - [x] Business Hours Forward Destination
+- [x] After Hours Forward Destination
 	### User Device Information
 	- [x] Device Name
 	- [x] Device Model
 	- [x] Device Serial
 	- [x] Device Status
+### Features
+- [x] Customisable API filtering.
 - [x] Customisable fields export, allowing the user to pick what they want to export to csv (API is only polled for what is selected.)
 
 ## Call Queue Information
