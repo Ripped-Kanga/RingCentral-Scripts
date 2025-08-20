@@ -22,8 +22,8 @@ def main_user():
 	print (f'Script Start Time: {start_time}')
 	connection_attempt = connection_test()
 	if connection_attempt:
-		print ("Proceeding with User Audit, note that as a minimum, the 'User' type is already filtered for.")
-		filter_user_count, user_count, built_url = audit_checker('/restapi/v1.0/account/~/extension?type=User')
+		print ("\nProceeding with User Audit\n")
+		filter_user_count, user_count, built_url = audit_checker('/restapi/v1.0/account/~/extension')
 		get_ringcentral_users(filter_user_count, user_count, built_url)
 	else:
 		sys.exit("API did not respond with 200 OK, please check your .env variables and credentails.")
@@ -78,7 +78,7 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 				for roles in user_roles_list:
 					ext_assigned_role = roles.displayName
 			else:
-				ext_assigned_role = "DEBUG"
+				ext_assigned_role = None
 
 		# If user selected dnd_state field for csv export, retrieve info from API and set variables.
 		if csv_field_dnd_state:
@@ -89,25 +89,28 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 		# If user selected Business Hours Forward Destination field for csv export, retireve info from API and set variables.
 		if csv_field_bhr_fw:
 			user_bh_forwarding_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/answering-rule/business-hours-rule')
-			user_bh_forwarding_data = json.loads(user_bh_forwarding_resp.text())
-			bhr_missed_call_forward = user_bh_forwarding_data.get('missedCall')
-			bhr_voicemail = user_bh_forwarding_data.get('voicemail', {}).get('enabled')
+			if user_bh_forwarding_resp != None:
+				user_bh_forwarding_data = json.loads(user_bh_forwarding_resp.text())
+				bhr_missed_call_forward = user_bh_forwarding_data.get('missedCall')
+				bhr_voicemail = user_bh_forwarding_data.get('voicemail', {}).get('enabled')
 
-			# Check if extension has business hours rule call forward or voicemail, set variables.
-			if bhr_voicemail == True:
-				ext_bhr_fw_dest = 'User Voicemail'
-			elif bhr_missed_call_forward:
-				# check if it is an internal or external forward
-				dest_type = user_bh_forwarding_data.get('missedCall', {}).get('actionType')
-				if dest_type == 'ConnectToExtension':
-					ext_bhr_int_fw_id = user_bh_forwarding_data.get('missedCall', {}).get('extension', {}).get('id')
-					check_fw_destination_int_name = connectRequest(f'/restapi/v1.0/account/~/extension/{ext_bhr_int_fw_id}')
-					fw_destination_int_name_data = json.loads(check_fw_destination_int_name.text())
-					ext_bhr_fw_dest = fw_destination_int_name_data.get('name')
-				elif dest_type == 'ConnectToExternalNumber':
-					ext_bhr_fw_dest = user_bh_forwarding_data.get('missedCall', {}).get('externalNumber', {}).get('phoneNumber')
+				# Check if extension has business hours rule call forward or voicemail, set variables.
+				if bhr_voicemail == True:
+					ext_bhr_fw_dest = 'User Voicemail'
+				elif bhr_missed_call_forward:
+					# check if it is an internal or external forward
+					dest_type = user_bh_forwarding_data.get('missedCall', {}).get('actionType')
+					if dest_type == 'ConnectToExtension':
+						ext_bhr_int_fw_id = user_bh_forwarding_data.get('missedCall', {}).get('extension', {}).get('id')
+						check_fw_destination_int_name = connectRequest(f'/restapi/v1.0/account/~/extension/{ext_bhr_int_fw_id}')
+						fw_destination_int_name_data = json.loads(check_fw_destination_int_name.text())
+						ext_bhr_fw_dest = fw_destination_int_name_data.get('name')
+					elif dest_type == 'ConnectToExternalNumber':
+						ext_bhr_fw_dest = user_bh_forwarding_data.get('missedCall', {}).get('externalNumber', {}).get('phoneNumber')
+				else:
+					ext_bhr_fw_dest = "No Business Hours Rule Exists"
 			else:
-				ext_bhr_fw_dest = "No Business Hours Rule Exists"
+				ext_bhr_fw_dest = "No Business Hours Rule"
 
 		# If user selected After Hours Forward Destination field for csv export, retrieve info from API and set variables.
 		if csv_field_ahr_fw:
@@ -135,7 +138,7 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 				else:
 					ext_ahr_fw_dest = "DEBUG"
 			else:
-				ext_ahr_fw_dest = "No After Hours Rules"
+				ext_ahr_fw_dest = "No After Hours Rule"
 
 
 		# If user selected device field for csv export, retrieve info from API and set variables.
