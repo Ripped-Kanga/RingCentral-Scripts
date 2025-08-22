@@ -123,10 +123,10 @@ def build_datalist(cq_name,cq_extension,cq_member,cq_member_ext, cq_member_accep
 	}
 	pprint.pprint(row, indent=4, sort_dicts=False)
 	call_queue_datalist.append(row)
-	build_csv(call_queue_datalist)
+	build_cq_csv(call_queue_datalist)
 
 # Builds the csv file, sets headers. 
-def build_csv(call_queue_datalist):
+def build_cq_csv(call_queue_datalist):
 	folder_name = 'AuditResults'
 	file_name = 'CallQueueAudit.csv'
 	if not os.path.exists(folder_name):
