@@ -64,6 +64,7 @@ Run the script you wish to run, below example has used `UserAudit.py`
 ## User Information
 - [x] First & Last Name
 - [x] Extension Number
+- [x] Extension Direct Number
 - [x] Email
 - [x] Departments
 - [x] Permissions (is administrator?)
@@ -74,11 +75,12 @@ Run the script you wish to run, below example has used `UserAudit.py`
 - [x] DND Status
 - [x] Business Hours Forward Destination
 - [x] After Hours Forward Destination
-	### User Device Information
-	- [x] Device Name
-	- [x] Device Model
-	- [x] Device Serial
-	- [x] Device Status
+#### User Device Information
+- [x] Device Name
+- [x] Device Model
+- [x] Device Serial
+- [x] Device Status
+
 ### Features
 - [x] Customisable API filtering.
 - [x] Customisable fields export, allowing the user to pick what they want to export to csv (API is only polled for what is selected.)
@@ -104,6 +106,8 @@ Run the script you wish to run, below example has used `UserAudit.py`
 	- [x] 404 Code Catch, treat as missing value and skip over.
 	- [x] 400 Code does not return status_code, so extract API error from exception body and catch that way. Currently catching "HTTP Error 400, AWR-193 Answering Rule not supported"
 	- [x] Any 500 Code, simply sleep the script and try again.
+- [x] Interactive audit name at the beginning of script run. 
+
 ### Logging
 - [x] Added first implementation of logging. Output is to .log file and console. Logging is enabled by setting DEBUG=1 in .env file. 
 
@@ -113,6 +117,7 @@ Run the script you wish to run, below example has used `UserAudit.py`
 - [x] Added After Hours Rule data
 - [x] Added full API filtering control before csv field selection. Return full extension count and then post filter extension count. If no extensions are returned from the new filter parameters, ask user to try again. 
 	- [ ] Move this into a new subfunction for cleaner code and allow users to chain parameters together (?type=User&status=Disabled)
+- [x] Added Direct Number to auditable fields. 
 
 ## CallQueueAudit.py
 
