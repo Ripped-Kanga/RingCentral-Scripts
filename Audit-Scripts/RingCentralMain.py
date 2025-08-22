@@ -185,7 +185,7 @@ def audit_checker (audit_url):
 		calling_function = inspect.stack()[1][3]
 
 		#Invoked if the calling script is UserAudit.py
-		if calling_function == "main_user":
+		if calling_function == "audit_start":
 			print ('#'*80, f'\n\u25BA\u25BA\u25BA Found {totalElements} Users\n', '#'*80, sep="")
 			print ()
 			while True:
@@ -499,7 +499,7 @@ def prep_user_csv():
 	return (csv_fields)
 
 #Builds the csv file, sets headers.
-def build_user_csv(datalist):
+def build_csv(datalist):
 	folder_name = 'AuditResults'
 	file_name = f'{str(audit_file_name)}'+'.csv'
 	if not os.path.exists(folder_name):
