@@ -161,11 +161,19 @@ def connection_test():
 				confirmation = input("Please confirm the company information displayed above is correct: (y/n)")
 				if confirmation in ['y', 'n']:
 					if confirmation == 'y':
-						return True
+						print("Confirmed Company Settings\n")
+						break
 					else:
 						sys.exit ("User selected No for company confirmation. Please check your JWT and client app information provided in .env")
 				print ("Please enter 'y' or 'n'.")
-		
+			
+			# Asks the user to enter a name for the audit, this will be the name of the csv file.
+			while True:
+				global audit_file_name
+				audit_file_name = str(input("Please enter a name for the audit: "))
+				if audit_file_name and audit_file_name.replace(" ", "") != "":
+					return (True, audit_file_name.replace(" ", ""))
+
 	except Exception as e:
 		print (f'Error during API request: Error \u25BA\u25BA {e}')
 
@@ -354,6 +362,7 @@ def prep_user_csv():
 		csv_field_id,
 		csv_field_name,
 		csv_field_number,
+		csv_field_did,
 		csv_field_status,
 		csv_field_type,
 		csv_field_subType,
@@ -369,7 +378,7 @@ def prep_user_csv():
 		csv_field_bhr_fw,
 		csv_field_ahr_fw,
 		csv_field_device_info
-	) = [False] * 18
+	) = [False] * 19
 	field_advisory_info = "The next window will ask you to select which fields you want to export to CSV. Selecting more fields will increase the time taken to audit each users, as well as increase the chance of hitting API rate limiting. If rate limiting occurs, the script will pause for 60 seconds to allow the limit to reset."
 	wrapped_field_info = textwrap.fill(field_advisory_info, width=80)
 	print(wrapped_field_info)
@@ -381,6 +390,7 @@ def prep_user_csv():
 	'ID',
 	'Name',
 	'Number',
+	'Direct Number',
 	'Status',
 	'Type',
 	'Sub Type',
@@ -406,6 +416,7 @@ def prep_user_csv():
 			csv_field_id,
 			csv_field_name,
 			csv_field_number,
+			csv_field_did,
 			csv_field_status,
 			csv_field_type,
 			csv_field_subType,
@@ -421,13 +432,15 @@ def prep_user_csv():
 			csv_field_bhr_fw,
 			csv_field_ahr_fw,
 			csv_field_device_info
-			) = [True] * 18
+			) = [True] * 19
 		elif o == 'ID':
 				csv_field_id = True
 		elif o == 'Name':
 				csv_field_name = True
 		elif o == 'Number':
 				csv_field_number = True
+		elif o == 'Direct Number':
+				csv_field_did = True
 		elif o == 'Status':
 				csv_field_status = True
 		elif o == 'Type':
@@ -465,6 +478,7 @@ def prep_user_csv():
 		csv_field_id,
 		csv_field_name,
 		csv_field_number,
+		csv_field_did,
 		csv_field_status,
 		csv_field_type,
 		csv_field_subType,
@@ -483,3 +497,34 @@ def prep_user_csv():
 		)
 
 	return (csv_fields)
+
+#Builds the csv file, sets headers.
+def build_user_csv(datalist):
+	folder_name = 'AuditResults'
+	file_name = f'{str(audit_file_name)}'+'.csv'
+	if not os.path.exists(folder_name):
+		os.makedirs(folder_name)
+	file_path = os.path.join(folder_name, file_name)
+
+	if not datalist:
+		print ("No data in dictionary to write")
+		return
+
+	fieldnames = list(datalist[0].keys())
+	with open(file_path, "w", newline='', encoding="utf-8") as csvfile:
+		writer = csv.DictWriter(csvfile, fieldnames=fieldnames, extrasaction='ignore')
+		writer.writeheader()
+		for row in datalist:
+			writer.writerow(row)
+
+# Start Execution
+if __name__ == "__main__":
+	#start main_user() and listen for keyboard interrupts
+	try:
+		main_user()
+	except KeyboardInterrupt:
+		print('\nInterrupted by keyboard CTRL + C, exiting...\n')
+		try:
+			sys.exit(130)
+		except SystemExit:
+			os._exit(130)
