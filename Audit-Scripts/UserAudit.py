@@ -9,7 +9,7 @@ import time
 import datetime
 import csv
 import pprint
-from RingCentralMain import housekeeping, connection_test, connectRequest, audit_checker, prep_user_csv
+from RingCentralMain import *
 
 # Global Variables
 start_time = datetime.datetime.now()
@@ -47,6 +47,7 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 		csv_field_id,
 		csv_field_name,
 		csv_field_number,
+		csv_field_did,
 		csv_field_status,
 		csv_field_type,
 		csv_field_subType,
@@ -64,13 +65,53 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 		csv_field_device_info
 	) = prep_user_csv()
 
+	# Initialise variables with default values.
+	(
+		ext_id,
+		ext_name,
+		ext_number,
+		ext_did,
+		ext_status,
+		ext_type,
+		ext_subType,
+		ext_site,
+		ext_company,
+		ext_department,
+		ext_job_title,
+		ext_email,
+		ext_dnd_status,
+		ext_bhr_fw_dest,
+		ext_ahr_fw_dest,
+		ext_assigned_role,
+		ext_is_admin,
+		ext_setup_wizard,
+		ext_device_name,
+		ext_device_model,
+		ext_device_serial,
+		ext_device_status
+		) = [None] * 22
+
 	resp = connectRequest(built_url)
 	# Loop through returned records and extract User IDs to build GET Extension URI.
 	for record in resp.json().records:
 		user_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}')
 		user_data = json.loads(user_resp.text())
 
-		# Check if user has role assigned, set variable.
+		# Check if user selected direct number field for csv export, retrieve info from API and set variables.
+		if csv_field_did:
+			user_did_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/phone-number?usageType=DirectNumber')
+			if user_did_resp:
+				user_did_data = json.loads(user_did_resp.text())
+				for phone_record in user_did_data['records']:
+					if phone_record.get('primary'):
+						ext_did = phone_record.get('phoneNumber')
+						break
+					else:
+						ext_did = None
+			else:
+				ext_did = None
+
+		# Check if user has selected user assigned role
 		if csv_field_user_assigned_role:
 			user_role_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/assigned-role')
 			user_roles_list = user_role_resp.json().records
@@ -101,10 +142,10 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 					# check if it is an internal or external forward
 					dest_type = user_bh_forwarding_data.get('missedCall', {}).get('actionType')
 					if dest_type == 'ConnectToExtension':
-						ext_bhr_int_fw_id = user_bh_forwarding_data.get('missedCall', {}).get('extension', {}).get('id')
-						check_fw_destination_int_name = connectRequest(f'/restapi/v1.0/account/~/extension/{ext_bhr_int_fw_id}')
-						fw_destination_int_name_data = json.loads(check_fw_destination_int_name.text())
-						ext_bhr_fw_dest = fw_destination_int_name_data.get('name')
+						ext_bhr_internal_fw_id = user_bh_forwarding_data.get('missedCall', {}).get('extension', {}).get('id')
+						check_fw_destination_int_name = connectRequest(f'/restapi/v1.0/account/~/extension/{ext_bhr_internal_fw_id}')
+						fw_destination_internal_name_data = json.loads(check_fw_destination_int_name.text())
+						ext_bhr_fw_dest = fw_destination_internal_name_data.get('name')
 					elif dest_type == 'ConnectToExternalNumber':
 						ext_bhr_fw_dest = user_bh_forwarding_data.get('missedCall', {}).get('externalNumber', {}).get('phoneNumber')
 				else:
@@ -143,7 +184,7 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 
 		# If user selected device field for csv export, retrieve info from API and set variables.
 		if csv_field_device_info:
-			device_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/device')
+			device_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/device?type=HardPhone')
 			device_data = json.loads(device_resp.text())
 			device_records = device_data['records']
 			if device_records:
@@ -179,6 +220,7 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 			**({"User ID": ext_id} if csv_field_id else {}),
 			**({"Extension Name": ext_name} if csv_field_name else {}),
 			**({"Extension Number": ext_number} if csv_field_number else {}),
+			**({"Extension Direct Number": ext_did} if csv_field_did else {}),
 			**({"Extension Status":	ext_status} if csv_field_status else {}),
 			**({"Extension Type":	ext_type} if csv_field_type else {}),
 			**({"Extension Sub Type":	ext_subType} if csv_field_subType else {}),
@@ -215,24 +257,6 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 		#Parse the datalist dictionary to be written to csv file
 		build_user_csv(datalist)
 
-#Builds the csv file, sets headers.
-def build_user_csv(datalist):
-	folder_name = 'AuditResults'
-	file_name = 'UserAudit.csv'
-	if not os.path.exists(folder_name):
-		os.makedirs(folder_name)
-	file_path = os.path.join(folder_name, file_name)
-
-	if not datalist:
-		print ("No data in dictionary to write")
-		return
-
-	fieldnames = list(datalist[0].keys())
-	with open(file_path, "w", newline='', encoding="utf-8") as csvfile:
-		writer = csv.DictWriter(csvfile, fieldnames=fieldnames, extrasaction='ignore')
-		writer.writeheader()
-		for row in datalist:
-			writer.writerow(row)
 
 # Start Execution
 if __name__ == "__main__":
