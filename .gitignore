@@ -199,3 +199,6 @@ RingCentral-Scripts.sublime-project
 
 # Script Output
 AuditResults/
+
+# Project Files
+ApiTester.py
