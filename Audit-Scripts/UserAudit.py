@@ -17,7 +17,7 @@ datalist = []
 user_audit = 0
 
 # Start main thread, this handles connection test, as well as parsing returned variable data from audit_checker().
-def main_user():
+def audit_start():
 	housekeeping()
 	print (f'Script Start Time: {start_time}')
 	connection_attempt = connection_test()
@@ -255,14 +255,14 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 			pprint.pprint(row, indent=4, sort_dicts=False)
 
 		#Parse the datalist dictionary to be written to csv file
-		build_user_csv(datalist)
+		build_csv(datalist)
 
 
 # Start Execution
 if __name__ == "__main__":
-	#start main_user() and listen for keyboard interrupts
+	# Start audit_start() and listen for keyboard interrupts
 	try:
-		main_user()
+		audit_start()
 	except KeyboardInterrupt:
 		print('\nInterrupted by keyboard CTRL + C, exiting...\n')
 		try:
