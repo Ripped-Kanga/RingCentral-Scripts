@@ -198,6 +198,4 @@ RingCentral-Scripts.sublime-workspace
 RingCentral-Scripts.sublime-project
 
 # Script Output
-CallQueueAudit.csv
-UserAudit.csv
-PhoneNumberAudit.csv
+AuditResults/
