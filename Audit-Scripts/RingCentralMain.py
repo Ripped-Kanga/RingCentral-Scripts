@@ -171,7 +171,7 @@ def connection_test():
 			# Asks the user to enter a name for the audit, this will be the name of the csv file.
 			while True:
 				global audit_file_name
-				audit_file_name = str(input("Please enter a name for the audit (NOTE: The files are automatically datestamped: "))
+				audit_file_name = str(input("Please enter a name for the audit (NOTE: The files are automatically datestamped): "))
 				if audit_file_name and audit_file_name.replace(" ", "") != "":
 					cleaned_file_name = audit_file_name.replace(" ", "").replace("/", "-")
 					audit_file_name = cleaned_file_name
@@ -249,7 +249,8 @@ def audit_checker_system(totalElements):
 				extension_types.append("User")
 			elif o == 'Call Queue':
 				extension_types.append("Department")
-				print("Because you selected Call Queue, an additional csv file will be created with enhanced call queue information.\n")
+				wrapped_disclaimer_call_queue_filter = textwrap.fill("Because you selected Call Queue, an additional csv file will be created with enhanced call queue information.", width=80)
+				print(wrapped_disclaimer_call_queue_filter)
 				input("Press Enter To continue")
 			elif o == 'Announcement':
 				extension_types.append("Announcement")
