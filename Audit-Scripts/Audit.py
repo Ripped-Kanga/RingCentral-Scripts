@@ -265,8 +265,8 @@ def get_ringcentral_extensions(filter_user_count, user_count, built_url):
 					"Call Queue Member":    				cq_member,
 					"Member Extension":     				cq_member_ext,
 					"Accept Queue Calls?":					cq_member_accept_calls,
-					"Accept Current Queue Calls?":	cq_member_accept_current_queue_calls,
-					"Forward Destination Type":			cq_bhr_fw_type,
+					"Accept Current Queue Calls?":			cq_member_accept_current_queue_calls,
+					"Forward Destination Type":				cq_bhr_fw_type,
 					"Forward Destination":					cq_bhr_fw_dest
 				}
 				cq_print_list.append(cq_row)
