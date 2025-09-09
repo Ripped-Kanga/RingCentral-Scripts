@@ -15,7 +15,6 @@ from RingCentralMain import *
 start_time = datetime.datetime.now()
 datalist = []
 cq_datalist = []
-cq_print_list = []
 user_audit = 0
 
 # Start main thread, this handles connection test, as well as parsing returned variable data from audit_checker().
@@ -269,7 +268,7 @@ def get_ringcentral_extensions(filter_user_count, user_count, built_url):
 					"Forward Destination Type":				cq_bhr_fw_type,
 					"Forward Destination":					cq_bhr_fw_dest
 				}
-				cq_print_list.append(cq_row)
+				
 				cq_datalist.append(cq_row)
 				
 
@@ -329,7 +328,6 @@ def get_ringcentral_extensions(filter_user_count, user_count, built_url):
 		#Parse the datalist dictionary to be written to csv file
 		build_csv(datalist)
 		if user_data.get('type') == "Department":
-			pprint.pprint(cq_print_list, indent=4, sort_dicts=False)
 			cq_build_csv(cq_datalist)
 
 # Start Execution
