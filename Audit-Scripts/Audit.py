@@ -215,7 +215,7 @@ def get_ringcentral_extensions(filter_user_count, user_count, built_url):
 				else:
 					ext_ahr_fw_dest = "DEBUG"
 			else:
-				ext_ahr_fw_dest = "No After Hours Rule"
+				ext_ahr_fw_dest = "No After Hours Rule Exists"
 
 
 		# If user selected device field for csv export, retrieve info from API and set variables.
