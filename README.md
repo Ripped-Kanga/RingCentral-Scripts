@@ -98,11 +98,14 @@ Run the script you wish to run, below example has used `UserAudit.py`
 - [x] Phone Number Status
 - [x] Filter Numbers based off filter parameters (Company Numbers, Direct Numbers, Inventory, Phone Line)
 
-
-# Implementation Tracking (v0.97-alpha)
+# Implementation Tracking (v0.98-alpha)
 
 ## General
 
+
+## Audit.py
+
+# Implementation Tracking (v0.97-alpha)
 
 ## Audit.py
 - [x] API filtering moved into a new subfunction for cleaner code and allow users to chain parameters together (?type=User&status=Disabled)
@@ -135,7 +138,3 @@ Run the script you wish to run, below example has used `UserAudit.py`
 	- [ ] Move this into a new subfunction for cleaner code and allow users to chain parameters together (?type=User&status=Disabled)
 - [x] Added Direct Number to auditable fields. 
 
-## CallQueueAudit.py
-
-
-## PhoneNumberAudit.py
