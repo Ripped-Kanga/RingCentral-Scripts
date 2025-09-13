@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 __author__ = "Alan Saunders"
-__purpose__ = "Uses the RingCentral API to collect information on the RingCentral instance, useful for conducting audits and health checks on RingCentral instances."
+__purpose__ = "Uses the RingCentral API to collect information on the instance, useful for conducting audits and health checks on RingCentral instances."
 __core_version__ = "0.97 - alpha"
 __version__ = "0.75"
 __github__ = "https://github.com/Ripped-Kanga/RingCentral-Scripts\n"
@@ -304,7 +304,8 @@ def audit_checker_system(totalElements):
 		filter_user_built_url = str(f'/restapi/v1.0/account/~/extension?perPage={filter_user_count}&{queryParams}')
 
 		if filter_user_count:
-			print (f'Found {filter_user_count} users with current filter parameters, proceeding to field customisation.\n')
+			print ('#'*80, f'\nFound {filter_user_count} users with current filter parameters, proceeding to field customisation.\n', '#'*80, sep="")
+			print ()
 			return (filter_user_count, totalElements, filter_user_built_url) 
 		print ("No results returned from filter paramaters. Please review your filter paramaters and try again.\n")
 		time.sleep(3)
@@ -341,7 +342,8 @@ def audit_checker_specific(totalElements):
 			filter_user_built_url = str(f'/restapi/v1.0/account/~/extension?perPage={filter_user_count}&{queryParams}')
 			
 			if filter_user_count:
-				print (f'Found {filter_user_count} users with current filter parameters, proceeding to field customisation.\n')
+				print ('#'*80, f'\nFound {filter_user_count} users with current filter parameters, proceeding to field customisation.\n', '#'*80, sep="")
+				print ()
 				return (filter_user_count, totalElements, filter_user_built_url) 
 			print ("No results returned from filter paramaters. Please review your filter paramaters and try again.\n")
 			time.sleep(3)
