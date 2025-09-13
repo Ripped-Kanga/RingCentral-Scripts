@@ -91,7 +91,6 @@ Run the script you wish to run, below example has used `UserAudit.py`
 - [x] Call Queue Members
 - [x] Call Queue Member Queue Switch Status
 - [x] Call Queue Memeber Global Switch Status
-- [x] Limit the audit to x call queues (this is legacy from debugging and will be replaced with better fitlering parameters)
 
 ## Phone Numbers Information
 - [x] Retrieve All Numbers
@@ -100,7 +99,22 @@ Run the script you wish to run, below example has used `UserAudit.py`
 - [x] Filter Numbers based off filter parameters (Company Numbers, Direct Numbers, Inventory, Phone Line)
 
 
-# Implementation Tracking (v0.95-alpha2)
+# Implementation Tracking (v0.97-alpha)
+
+## General
+
+
+## Audit.py
+- [x] API filtering moved into a new subfunction for cleaner code and allow users to chain parameters together (?type=User&status=Disabled)
+- [x] If a call queue is selected in the API filtering, either by direct choice or through broader filtering, always create a seperate more detailed CallQueue csv file that includes enhanced call queue presence details. 
+
+## CallQueueAudit.py
+- [x] Deprecated as of V0.97-alpha
+
+## PhoneNumberAudit.py
+- [x] Deprecated as of V0.97-alpha
+
+# Implementation Tracking (v0.95-alpha)
 
 ## General
 ### Error Handling
@@ -125,4 +139,3 @@ Run the script you wish to run, below example has used `UserAudit.py`
 
 
 ## PhoneNumberAudit.py
-

@@ -14,6 +14,7 @@ from RingCentralMain import *
 # Global Variables
 start_time = datetime.datetime.now()
 datalist = []
+cq_datalist = []
 user_audit = 0
 
 # Start main thread, this handles connection test, as well as parsing returned variable data from audit_checker().
@@ -24,7 +25,7 @@ def audit_start():
 	if connection_attempt:
 		print ("\nProceeding with User Audit\n")
 		filter_user_count, user_count, built_url = audit_checker('/restapi/v1.0/account/~/extension')
-		get_ringcentral_users(filter_user_count, user_count, built_url)
+		get_ringcentral_extensions(filter_user_count, user_count, built_url)
 	else:
 		sys.exit("API did not respond with 200 OK, please check your .env variables and credentails.")
 
@@ -42,7 +43,7 @@ def audit_start():
 	exit (0)
 
 # Receives parsed variable data from audit_checker() and begins audit of users, stores audited data in datalist dictionary and parses it to build_user_csv()
-def get_ringcentral_users(filter_user_count, user_count, built_url):
+def get_ringcentral_extensions(filter_user_count, user_count, built_url):
 	(
 		csv_field_id,
 		csv_field_name,
@@ -50,7 +51,6 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 		csv_field_did,
 		csv_field_status,
 		csv_field_type,
-		csv_field_subType,
 		csv_field_site,
 		csv_field_company,
 		csv_field_department,
@@ -73,7 +73,6 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 		ext_did,
 		ext_status,
 		ext_type,
-		ext_subType,
 		ext_site,
 		ext_company,
 		ext_department,
@@ -88,8 +87,10 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 		ext_device_name,
 		ext_device_model,
 		ext_device_serial,
-		ext_device_status
-		) = [None] * 22
+		ext_device_status,
+		cq_bhr_fw_dest,
+		cq_bhr_fw_type
+		) = [None] * 23
 
 	resp = connectRequest(built_url)
 	# Loop through returned records and extract User IDs to build GET Extension URI.
@@ -128,26 +129,61 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 			ext_dnd_status = user_presence_data.get('dndStatus')
 
 		# If user selected Business Hours Forward Destination field for csv export, retireve info from API and set variables.
+		# Call Queues return additional JSON that must be filtered for. 
 		if csv_field_bhr_fw:
-			user_bh_forwarding_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/answering-rule/business-hours-rule')
-			if user_bh_forwarding_resp != None:
-				user_bh_forwarding_data = json.loads(user_bh_forwarding_resp.text())
-				bhr_missed_call_forward = user_bh_forwarding_data.get('missedCall')
-				bhr_voicemail = user_bh_forwarding_data.get('voicemail', {}).get('enabled')
+			bh_forwarding_resp = connectRequest(f'/restapi/v1.0/account/~/extension/{record.id}/answering-rule/business-hours-rule')
+			if bh_forwarding_resp != None:
+				bh_forwarding_data = json.loads(bh_forwarding_resp.text())
+				bhr_missed_call_forward = bh_forwarding_data.get('missedCall')
+				bhr_voicemail = bh_forwarding_data.get('voicemail', {}).get('enabled')
+
+				# Check if the extension type is a call queue and process differently. 
+				if user_data.get('type') == "Department":
+					bh_fwd_cq_data = bh_forwarding_data.get('queue', {})
+					bh_fwd_cq_holdTimerAction = bh_forwarding_data.get('queue', {}).get('holdTimeExpirationAction')
+
+					# Checks if transfer type is "To Extension"
+					if bh_fwd_cq_holdTimerAction == "TransferToExtension":
+						cq_fwd_ext_data = bh_forwarding_data.get('queue', {}).get('transfer')
+						for call_queue_transfer_exts in cq_fwd_ext_data:
+							if call_queue_transfer_exts.get('action') == "HoldTimeExpiration":
+								cq_fwd_ext = call_queue_transfer_exts.get('extension', {}).get('name')
+								ext_bhr_fw_dest = cq_fwd_ext
+								cq_bhr_fw_dest = cq_fwd_ext
+								cq_bhr_fw_type = 'Transfer to Extension'
+
+					# Check if transfer type is "To Voicemail"
+					elif bh_fwd_cq_holdTimerAction == "Voicemail":
+						ext_bhr_fw_dest = 'Call Queue Voicemail'
+						cq_bhr_fw_dest = 'Call Queue Voicemail'
+						cq_bhr_fw_type = 'Call Queue Voicemail'
+
+					# Check if transfer type is "To External Number"
+					elif bh_fwd_cq_holdTimerAction == "UnconditionalForwarding":
+						bh_fwd_cq_external = bh_fwd_cq_data.get('unconditionalForwarding')
+						for ext_number in bh_fwd_cq_external:
+							cq_fwd_external_dest = ext_number.get('phoneNumber')
+							ext_bhr_fw_dest = cq_fwd_external_dest
+							cq_bhr_fw_dest = cq_fwd_external_dest
+							cq_bhr_fw_type = "External Number"
+
+					# Catch unknown values
+					else:
+						ext_bhr_fw_dest == "Unknown"
 
 				# Check if extension has business hours rule call forward or voicemail, set variables.
-				if bhr_voicemail == True:
+				elif user_data.get('type') == "User" and bhr_voicemail:
 					ext_bhr_fw_dest = 'User Voicemail'
-				elif bhr_missed_call_forward:
+				elif user_data.get('type') == "User" and bhr_missed_call_forward:
 					# check if it is an internal or external forward
-					dest_type = user_bh_forwarding_data.get('missedCall', {}).get('actionType')
+					dest_type = bh_forwarding_data.get('missedCall', {}).get('actionType')
 					if dest_type == 'ConnectToExtension':
-						ext_bhr_internal_fw_id = user_bh_forwarding_data.get('missedCall', {}).get('extension', {}).get('id')
+						ext_bhr_internal_fw_id = bh_forwarding_data.get('missedCall', {}).get('extension', {}).get('id')
 						check_fw_destination_int_name = connectRequest(f'/restapi/v1.0/account/~/extension/{ext_bhr_internal_fw_id}')
 						fw_destination_internal_name_data = json.loads(check_fw_destination_int_name.text())
 						ext_bhr_fw_dest = fw_destination_internal_name_data.get('name')
 					elif dest_type == 'ConnectToExternalNumber':
-						ext_bhr_fw_dest = user_bh_forwarding_data.get('missedCall', {}).get('externalNumber', {}).get('phoneNumber')
+						ext_bhr_fw_dest = bh_forwarding_data.get('missedCall', {}).get('externalNumber', {}).get('phoneNumber')
 				else:
 					ext_bhr_fw_dest = "No Business Hours Rule Exists"
 			else:
@@ -179,7 +215,7 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 				else:
 					ext_ahr_fw_dest = "DEBUG"
 			else:
-				ext_ahr_fw_dest = "No After Hours Rule"
+				ext_ahr_fw_dest = "No After Hours Rule Exists"
 
 
 		# If user selected device field for csv export, retrieve info from API and set variables.
@@ -199,13 +235,49 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 				ext_device_serial = "No Device"
 				ext_device_status = "No Device"
 
+		# If the user included call queues as a specific API filter, build another dict and export to seperate AuditCallQueue.csv file which includes call queue members.
+		if user_data.get('type') == "Department":
+			resp = connectRequest('/restapi/v1.0/account/~/call-queues/'+str(record.id)+'/presence')
+			call_queue_members = json.loads(resp.text())
+
+			# Initialise default variable values to protect against loop crash if a call queue has no members.
+			cq_member = str('No member')
+			cq_member_ext = ''
+			cq_member_accept_current_queue_calls = ''
+			cq_member_accept_calls = ''
+
+			for member in call_queue_members['records']:
+				
+				cq_member = member.get('member', {}).get('name')
+				if cq_member:
+					cq_member_ext = member.get('member', {}).get('extensionNumber')					
+					cq_member_accept_calls = member.get('acceptQueueCalls')
+					cq_member_accept_current_queue_calls = member.get('acceptCurrentQueueCalls')
+				else:
+					cq_member = str('No member')
+					cq_member_ext = ''
+					cq_member_accept_current_queue_calls = ''
+					cq_member_accept_calls = ''
+				cq_row = {
+					"Call Queue Name":      				user_data.get('name'),
+					"Call Queue Extension": 				user_data.get('extensionNumber'),
+					"Call Queue Member":    				cq_member,
+					"Member Extension":     				cq_member_ext,
+					"Accept Queue Calls?":					cq_member_accept_calls,
+					"Accept Current Queue Calls?":			cq_member_accept_current_queue_calls,
+					"Forward Destination Type":				cq_bhr_fw_type,
+					"Forward Destination":					cq_bhr_fw_dest
+				}
+				
+				cq_datalist.append(cq_row)
+				
+
 		# Set User API variables.
 		ext_id = record.id
 		ext_name = user_data.get('name')
 		ext_number = user_data.get('extensionNumber')
 		ext_status = user_data.get('status')
 		ext_type = user_data.get('type')
-		ext_subType = user_data.get('subType')
 		ext_site = user_data.get('site', {}).get('name')
 		ext_company = user_data.get('contact', {}).get('company')
 		ext_department = user_data.get('contact', {}).get('department')
@@ -223,7 +295,6 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 			**({"Extension Direct Number": ext_did} if csv_field_did else {}),
 			**({"Extension Status":	ext_status} if csv_field_status else {}),
 			**({"Extension Type":	ext_type} if csv_field_type else {}),
-			**({"Extension Sub Type":	ext_subType} if csv_field_subType else {}),
 			**({"Site": ext_site} if csv_field_site else {}),
 			**({"Company": ext_company} if csv_field_company else {}),
 			**({"Department": ext_department} if csv_field_department else {}),
@@ -241,22 +312,23 @@ def get_ringcentral_users(filter_user_count, user_count, built_url):
 			**({"Device Status": ext_device_status} if csv_field_device_info else {})
 		}
 		datalist.append(row)
-		
+
 		# Global variable user_audit so that user_main() can report the total audited users.
 		global user_audit
 		user_audit += 1
 		if filter_user_count:
 			print (f'\nAudited {user_audit} of {filter_user_count} filtered users.\n')
 			print (f'### {ext_name} ###')
-			pprint.pprint(row, indent=4, sort_dicts=False)
+			pprint.pprint(row, indent=2, sort_dicts=False)
 		else:
 			print (f'\nAudited {user_audit} of {user_count} users.\n')
 			print (f'### {ext_name} ###')
-			pprint.pprint(row, indent=4, sort_dicts=False)
+			pprint.pprint(row, indent=2, sort_dicts=False)
 
 		#Parse the datalist dictionary to be written to csv file
 		build_csv(datalist)
-
+		if user_data.get('type') == "Department":
+			cq_build_csv(cq_datalist)
 
 # Start Execution
 if __name__ == "__main__":
